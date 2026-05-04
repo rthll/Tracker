@@ -1,102 +1,127 @@
-const View = {
-    atualizarListaAlimentos(alimentos) {
-      const lista = document.getElementById('listaAlimentos');
-      lista.innerHTML = '';
-      alimentos.forEach((a, i) => {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = a.nome;
-        lista.appendChild(opt);
-      });
-    },
+const Controller = {
+  init() {
+    const inputData = document.getElementById("dataSelecionada");
+    inputData.value = this.obterDataHojeLocal();
 
-    atualizarTabelaRefeicao(refeicao) {
-      const tbody = document.getElementById('tabelaRefeicao');
-      tbody.innerHTML = '';
-      let totalCarbo = 0, totalProteina = 0, totalGordura = 0, totalCal = 0;
+    document.getElementById("btnCadastrar").addEventListener("click", () => {
+      this.cadastrarAlimento();
+    });
+    document.getElementById("btnAdicionar").addEventListener("click", () => {
+      this.adicionarRefeicao();
+    });
+    inputData.addEventListener("change", () => {
+      this.atualizarView();
+    });
 
-      refeicao.forEach((item, index) => {
-        totalCarbo += item.carboidratos;
-        totalProteina += item.proteinas;
-        totalGordura += item.gorduras;
-        totalCal += item.calorias;
+    this.atualizarView();
+  },
 
-        const row = `<tr>
-          <td>${item.nome}</td><td>${item.quantidade}</td>
-          <td>${item.carboidratos.toFixed(2)}</td>
-          <td>${item.proteinas.toFixed(2)}</td>
-          <td>${item.gorduras.toFixed(2)}</td>
-          <td>${item.calorias.toFixed(2)}</td>
-          <td><button class="remover" onclick="Controller.removerItem(${index})">X</button></td>
-        </tr>`;
-        tbody.innerHTML += row;
-      });
+  obterDataHojeLocal() {
+    const agora = new Date();
+    const ano = agora.getFullYear();
+    const mes = String(agora.getMonth() + 1).padStart(2, "0");
+    const dia = String(agora.getDate()).padStart(2, "0");
+    return `${ano}-${mes}-${dia}`;
+  },
 
-      document.getElementById('totalCarbo').textContent = totalCarbo.toFixed(2);
-      document.getElementById('totalProteina').textContent = totalProteina.toFixed(2);
-      document.getElementById('totalGordura').textContent = totalGordura.toFixed(2);
-      document.getElementById('totalCalorias').textContent = totalCal.toFixed(2);
+  getDataAtual() {
+    return document.getElementById("dataSelecionada").value || this.obterDataHojeLocal();
+  },
+
+  formatarDataExibicao(data) {
+    if (!data) {
+      return "Sem data definida";
     }
-  };
 
-  const Controller = {
-    init() {
-      const hoje = new Date().toISOString().split('T')[0];
-      document.getElementById('dataSelecionada').value = hoje;
-      this.atualizarView();
+    const [ano, mes, dia] = data.split("-").map(Number);
+    const dataLocal = new Date(ano, mes - 1, dia);
 
-      document.getElementById('btnCadastrar').onclick = this.cadastrarAlimento.bind(this);
-      document.getElementById('btnAdicionar').onclick = this.adicionarRefeicao.bind(this);
-      document.getElementById('dataSelecionada').onchange = this.atualizarView.bind(this);
-    },
+    return new Intl.DateTimeFormat("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    }).format(dataLocal);
+  },
 
-    getDataAtual() {
-      return document.getElementById('dataSelecionada').value;
-    },
+  cadastrarAlimento() {
+    const nome = document.getElementById("nome").value.trim();
+    const carboidratos = Number.parseFloat(document.getElementById("carboidratos").value);
+    const proteinas = Number.parseFloat(document.getElementById("proteinas").value);
+    const gorduras = Number.parseFloat(document.getElementById("gorduras").value);
+    const calorias = Number.parseFloat(document.getElementById("calorias").value);
+    const valores = [carboidratos, proteinas, gorduras, calorias];
 
-    cadastrarAlimento() {
-      const nome = document.getElementById('nome').value;
-      const c = parseFloat(document.getElementById('carboidratos').value);
-      const p = parseFloat(document.getElementById('proteinas').value);
-      const g = parseFloat(document.getElementById('gorduras').value);
-      const cal = parseFloat(document.getElementById('calorias').value);
-      if (!nome || isNaN(c) || isNaN(p) || isNaN(g) || isNaN(cal)) return alert('Preencha corretamente.');
-
-      Model.adicionarAlimento({ nome, carboidratos: c, proteinas: p, gorduras: g, calorias: cal });
-      View.atualizarListaAlimentos(Model.getAlimentos());
-
-      ['nome', 'carboidratos', 'proteinas', 'gorduras', 'calorias'].forEach(id => document.getElementById(id).value = '');
-    },
-
-    adicionarRefeicao() {
-      const index = document.getElementById('listaAlimentos').value;
-      const qtd = parseFloat(document.getElementById('quantidade').value);
-      if (index === '' || isNaN(qtd) || qtd <= 0) return alert('Selecione alimento e quantidade.');
-
-      const base = Model.getAlimentos()[index];
-      const fator = qtd / 100;
-      const item = {
-        nome: base.nome,
-        quantidade: qtd,
-        carboidratos: base.carboidratos * fator,
-        proteinas: base.proteinas * fator,
-        gorduras: base.gorduras * fator,
-        calorias: base.calorias * fator
-      };
-      Model.adicionarRefeicao(this.getDataAtual(), item);
-      this.atualizarView();
-      document.getElementById('quantidade').value = '';
-    },
-
-    removerItem(index) {
-      Model.removerItem(this.getDataAtual(), index);
-      this.atualizarView();
-    },
-
-    atualizarView() {
-      View.atualizarListaAlimentos(Model.getAlimentos());
-      View.atualizarTabelaRefeicao(Model.getRefeicao(this.getDataAtual()));
+    if (!nome || valores.some(Number.isNaN) || valores.some((valor) => valor < 0)) {
+      alert("Preencha corretamente o alimento e informe valores numéricos válidos.");
+      return;
     }
-  };
 
-  window.onload = () => Controller.init();
+    Model.adicionarAlimento({
+      nome,
+      carboidratos,
+      proteinas,
+      gorduras,
+      calorias
+    });
+
+    this.limparCamposCadastro();
+    this.atualizarView();
+  },
+
+  limparCamposCadastro() {
+    ["nome", "carboidratos", "proteinas", "gorduras", "calorias"].forEach((id) => {
+      document.getElementById(id).value = "";
+    });
+  },
+
+  adicionarRefeicao() {
+    const valorSelecionado = document.getElementById("listaAlimentos").value;
+    const indice = Number.parseInt(valorSelecionado, 10);
+    const quantidade = Number.parseFloat(document.getElementById("quantidade").value);
+
+    if (Number.isNaN(indice) || Number.isNaN(quantidade) || quantidade <= 0) {
+      alert("Selecione um alimento e informe uma quantidade maior que zero.");
+      return;
+    }
+
+    const alimentoBase = Model.getAlimentos()[indice];
+
+    if (!alimentoBase) {
+      alert("O alimento selecionado não está disponível.");
+      return;
+    }
+
+    const fator = quantidade / 100;
+    Model.adicionarRefeicao(this.getDataAtual(), {
+      nome: alimentoBase.nome,
+      quantidade,
+      carboidratos: alimentoBase.carboidratos * fator,
+      proteinas: alimentoBase.proteinas * fator,
+      gorduras: alimentoBase.gorduras * fator,
+      calorias: alimentoBase.calorias * fator
+    });
+
+    document.getElementById("quantidade").value = "";
+    document.getElementById("listaAlimentos").value = "";
+    this.atualizarView();
+  },
+
+  removerItem(index) {
+    Model.removerItem(this.getDataAtual(), index);
+    this.atualizarView();
+  },
+
+  atualizarView() {
+    const dataAtual = this.getDataAtual();
+    document.getElementById("dataSelecionada").value = dataAtual;
+
+    View.atualizarCabecalhos(this.formatarDataExibicao(dataAtual));
+    View.atualizarListaAlimentos(Model.getAlimentos());
+    View.atualizarTabelaRefeicao(Model.getRefeicao(dataAtual));
+  }
+};
+
+window.addEventListener("DOMContentLoaded", () => {
+  Controller.init();
+});

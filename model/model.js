@@ -1,25 +1,42 @@
 const Model = {
-    alimentos: [],
-    refeicoesPorData: {},
+  alimentos: [],
+  refeicoesPorData: {},
 
-    adicionarAlimento(alimento) {
-      this.alimentos.push(alimento);
-    },
+  adicionarAlimento(alimento) {
+    this.alimentos.push(alimento);
+  },
 
-    getAlimentos() {
-      return this.alimentos;
-    },
+  getAlimentos() {
+    return this.alimentos;
+  },
 
-    adicionarRefeicao(data, item) {
-      if (!this.refeicoesPorData[data]) this.refeicoesPorData[data] = [];
-      this.refeicoesPorData[data].push(item);
-    },
-
-    getRefeicao(data) {
-      return this.refeicoesPorData[data] || [];
-    },
-
-    removerItem(data, index) {
-      this.refeicoesPorData[data].splice(index, 1);
+  adicionarRefeicao(data, item) {
+    if (!data) {
+      return;
     }
-  };
+
+    if (!this.refeicoesPorData[data]) {
+      this.refeicoesPorData[data] = [];
+    }
+
+    this.refeicoesPorData[data].push(item);
+  },
+
+  getRefeicao(data) {
+    if (!data) {
+      return [];
+    }
+
+    return this.refeicoesPorData[data] || [];
+  },
+
+  removerItem(data, index) {
+    const refeicao = this.refeicoesPorData[data];
+
+    if (!Array.isArray(refeicao) || index < 0 || index >= refeicao.length) {
+      return;
+    }
+
+    refeicao.splice(index, 1);
+  }
+};
