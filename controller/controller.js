@@ -267,6 +267,7 @@ const Controller = {
     View.atualizarMetasDiarias(Model.getMetasDiarias());
     View.atualizarResumoPorRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());
     const totaisDoDia = View.atualizarTabelaRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());
+    View.atualizarDashboard(totaisDoDia, Model.getMetasDiarias());
     View.atualizarProgressoMetas(totaisDoDia, Model.getMetasDiarias());
     this.sincronizarAlimentoSelecionado();
   }

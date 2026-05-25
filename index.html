@@ -162,6 +162,49 @@
         </article>
       </section>
 
+      <section class="dashboard-panel" aria-label="Dashboard nutricional do dia">
+        <div class="panel-heading dashboard-heading">
+          <div>
+            <span class="panel-kicker">Dashboard</span>
+            <h2>Vis&atilde;o do dia</h2>
+          </div>
+          <p id="dashboardStatus">Defina metas e registre alimentos para acompanhar o progresso.</p>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="dashboard-metric dashboard-metric-main">
+            <span class="dashboard-label">Calorias consumidas</span>
+            <div class="dashboard-main-value"><span id="dashboardCaloriasConsumidas">0.00</span><small>kcal</small></div>
+            <div class="dashboard-meta-row">
+              <span id="dashboardCaloriasMeta">Meta: 0.00 kcal</span>
+              <strong id="dashboardCaloriasRestantes">Meta n&atilde;o definida</strong>
+            </div>
+          </article>
+
+          <article class="dashboard-metric">
+            <span class="dashboard-label">Distribui&ccedil;&atilde;o dos macros</span>
+            <div class="macro-stack" aria-hidden="true">
+              <span class="macro-stack-segment macro-carbs" id="dashboardDistribuicaoCarbs"></span>
+              <span class="macro-stack-segment macro-protein" id="dashboardDistribuicaoProteinas"></span>
+              <span class="macro-stack-segment macro-fat" id="dashboardDistribuicaoGorduras"></span>
+            </div>
+            <div class="macro-distribution-list">
+              <div><span>Carboidratos</span><strong id="dashboardPercentualCarbs">0.00%</strong></div>
+              <div><span>Prote&iacute;nas</span><strong id="dashboardPercentualProteinas">0.00%</strong></div>
+              <div><span>Gorduras</span><strong id="dashboardPercentualGorduras">0.00%</strong></div>
+            </div>
+          </article>
+        </div>
+
+        <div class="dashboard-chart-panel">
+          <div class="dashboard-chart-heading">
+            <span class="dashboard-label">Meta x consumido</span>
+            <strong id="dashboardAderenciaMedia">0.00% de ader&ecirc;ncia m&eacute;dia</strong>
+          </div>
+          <div class="macro-target-chart" id="dashboardMacroTargetChart"></div>
+        </div>
+      </section>
+
       <section class="goals-panel" aria-label="Metas diarias">
         <div class="panel-heading goals-heading">
           <div>

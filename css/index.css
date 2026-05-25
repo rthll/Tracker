@@ -439,6 +439,249 @@ body {
   margin-bottom: 24px;
 }
 
+.dashboard-panel {
+  margin-bottom: 24px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.dashboard-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr);
+  align-items: end;
+  gap: 18px;
+}
+
+.dashboard-heading p {
+  align-self: center;
+  font-size: 0.92rem;
+  text-align: right;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.dashboard-metric,
+.dashboard-chart-panel {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(37, 62, 78, 0.1);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.dashboard-metric-main {
+  background:
+    linear-gradient(145deg, rgba(20, 77, 63, 0.95), rgba(29, 107, 87, 0.9)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
+  color: #f7fbf9;
+}
+
+.dashboard-label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.dashboard-metric-main .dashboard-label,
+.dashboard-metric-main .dashboard-meta-row span,
+.dashboard-metric-main .dashboard-main-value small {
+  color: rgba(247, 251, 249, 0.76);
+}
+
+.dashboard-main-value {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 2.45rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dashboard-main-value small {
+  padding-bottom: 5px;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.dashboard-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.macro-stack {
+  display: flex;
+  width: 100%;
+  height: 18px;
+  overflow: hidden;
+  margin-top: 16px;
+  border-radius: 999px;
+  background: rgba(37, 62, 78, 0.1);
+}
+
+.macro-stack-segment {
+  display: block;
+  width: 0;
+  min-width: 0;
+  height: 100%;
+  transition: width 0.25s ease;
+}
+
+.macro-carbs {
+  background: #2f80ed;
+}
+
+.macro-protein {
+  background: var(--primary);
+}
+
+.macro-fat {
+  background: var(--accent);
+}
+
+.macro-calories {
+  background: #7b61ff;
+}
+
+.macro-distribution-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.macro-distribution-list div {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-left: 18px;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.macro-distribution-list div::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.macro-distribution-list div:nth-child(1)::before {
+  background: #2f80ed;
+}
+
+.macro-distribution-list div:nth-child(2)::before {
+  background: var(--primary);
+}
+
+.macro-distribution-list div:nth-child(3)::before {
+  background: var(--accent);
+}
+
+.macro-distribution-list span {
+  color: var(--text-secondary);
+}
+
+.dashboard-chart-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.dashboard-chart-heading strong {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.macro-target-chart {
+  display: grid;
+  gap: 12px;
+}
+
+.macro-chart-row {
+  display: grid;
+  grid-template-columns: minmax(145px, 0.45fr) minmax(180px, 1fr) minmax(76px, auto);
+  align-items: center;
+  gap: 14px;
+}
+
+.macro-chart-label {
+  display: grid;
+  gap: 2px;
+}
+
+.macro-chart-label span {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.macro-chart-label strong,
+.macro-chart-percent {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.macro-chart-bars {
+  position: relative;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(37, 62, 78, 0.08);
+}
+
+.macro-chart-target,
+.macro-chart-consumed {
+  position: absolute;
+  left: 0;
+  display: block;
+  border-radius: inherit;
+}
+
+.macro-chart-target {
+  top: 0;
+  height: 100%;
+  border: 1px dashed rgba(37, 62, 78, 0.22);
+  background: rgba(37, 62, 78, 0.06);
+}
+
+.macro-chart-consumed {
+  top: 4px;
+  height: 14px;
+  min-width: 0;
+  transition: width 0.25s ease, background 0.25s ease;
+}
+
+.macro-chart-over {
+  background: var(--danger);
+}
+
+.macro-chart-percent {
+  text-align: right;
+}
+
 .goals-panel {
   margin-bottom: 24px;
   padding: 24px;
@@ -737,10 +980,16 @@ body {
   .hero,
   .content-grid,
   .summary-grid,
+  .dashboard-heading,
+  .dashboard-grid,
   .goals-form,
   .goal-progress-grid,
   .meal-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-heading p {
+    text-align: left;
   }
 
   .hero h1 {
@@ -771,6 +1020,15 @@ body {
   .goals-heading,
   .panel-heading-table {
     grid-template-columns: 1fr;
+  }
+
+  .macro-chart-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .macro-chart-percent {
+    text-align: left;
   }
 
   .panel-heading-table .btn-compact {

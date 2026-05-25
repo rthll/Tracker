@@ -193,6 +193,133 @@ const View = {
     });
   },
 
+  atualizarDashboard(totais, metas) {
+    this.atualizarDashboardCalorias(totais, metas);
+    this.atualizarDistribuicaoMacros(totais);
+    this.atualizarGraficoMetaConsumido(totais, metas);
+  },
+
+  atualizarDashboardCalorias(totais, metas) {
+    const consumido = totais.calorias || 0;
+    const meta = metas.calorias || 0;
+    const restante = meta - consumido;
+    const status = document.getElementById("dashboardStatus");
+
+    document.getElementById("dashboardCaloriasConsumidas").textContent = this.formatarNumero(consumido);
+    document.getElementById("dashboardCaloriasMeta").textContent = `Meta: ${this.formatarNumero(meta)} kcal`;
+
+    if (meta <= 0) {
+      document.getElementById("dashboardCaloriasRestantes").textContent = "Meta n\u00e3o definida";
+      status.textContent = consumido > 0
+        ? "Consumo registrado. Defina metas para comparar o desempenho do dia."
+        : "Defina metas e registre alimentos para acompanhar o progresso.";
+      return;
+    }
+
+    if (restante >= 0) {
+      document.getElementById("dashboardCaloriasRestantes").textContent = `${this.formatarNumero(restante)} kcal restantes`;
+      status.textContent = `Dia dentro da meta cal\u00f3rica: ${this.formatarNumero((consumido / meta) * 100)}% consumido.`;
+      return;
+    }
+
+    document.getElementById("dashboardCaloriasRestantes").textContent = `${this.formatarNumero(Math.abs(restante))} kcal acima`;
+    status.textContent = `Meta cal\u00f3rica excedida em ${this.formatarNumero(Math.abs(restante))} kcal.`;
+  },
+
+  atualizarDistribuicaoMacros(totais) {
+    const caloriasMacros = {
+      carboidratos: (totais.carboidratos || 0) * 4,
+      proteinas: (totais.proteinas || 0) * 4,
+      gorduras: (totais.gorduras || 0) * 9
+    };
+    const totalMacros = caloriasMacros.carboidratos + caloriasMacros.proteinas + caloriasMacros.gorduras;
+    const percentuais = {
+      carboidratos: totalMacros > 0 ? (caloriasMacros.carboidratos / totalMacros) * 100 : 0,
+      proteinas: totalMacros > 0 ? (caloriasMacros.proteinas / totalMacros) * 100 : 0,
+      gorduras: totalMacros > 0 ? (caloriasMacros.gorduras / totalMacros) * 100 : 0
+    };
+
+    document.getElementById("dashboardDistribuicaoCarbs").style.width = `${percentuais.carboidratos}%`;
+    document.getElementById("dashboardDistribuicaoProteinas").style.width = `${percentuais.proteinas}%`;
+    document.getElementById("dashboardDistribuicaoGorduras").style.width = `${percentuais.gorduras}%`;
+    document.getElementById("dashboardPercentualCarbs").textContent = `${this.formatarNumero(percentuais.carboidratos)}%`;
+    document.getElementById("dashboardPercentualProteinas").textContent = `${this.formatarNumero(percentuais.proteinas)}%`;
+    document.getElementById("dashboardPercentualGorduras").textContent = `${this.formatarNumero(percentuais.gorduras)}%`;
+  },
+
+  atualizarGraficoMetaConsumido(totais, metas) {
+    const container = document.getElementById("dashboardMacroTargetChart");
+    const itens = [
+      { chave: "carboidratos", nome: "Carboidratos", unidade: "g", classe: "macro-carbs" },
+      { chave: "proteinas", nome: "Prote\u00ednas", unidade: "g", classe: "macro-protein" },
+      { chave: "gorduras", nome: "Gorduras", unidade: "g", classe: "macro-fat" },
+      { chave: "calorias", nome: "Calorias", unidade: "kcal", classe: "macro-calories" }
+    ];
+    const percentuaisComMeta = [];
+
+    container.innerHTML = "";
+
+    itens.forEach((item) => {
+      const consumido = totais[item.chave] || 0;
+      const meta = metas[item.chave] || 0;
+      const maiorValor = Math.max(consumido, meta, 1);
+      const percentualMeta = meta > 0 ? (meta / maiorValor) * 100 : 0;
+      const percentualConsumido = consumido > 0 ? (consumido / maiorValor) * 100 : 0;
+      const percentualAtingido = meta > 0 ? (consumido / meta) * 100 : 0;
+
+      if (meta > 0) {
+        percentuaisComMeta.push(Math.min(percentualAtingido, 100));
+      }
+
+      const row = document.createElement("div");
+      row.className = "macro-chart-row";
+
+      const label = document.createElement("div");
+      label.className = "macro-chart-label";
+
+      const nome = document.createElement("span");
+      nome.textContent = item.nome;
+
+      const valores = document.createElement("strong");
+      valores.textContent = `${this.formatarNumero(consumido)} / ${this.formatarNumero(meta)} ${item.unidade}`;
+
+      label.appendChild(nome);
+      label.appendChild(valores);
+
+      const bars = document.createElement("div");
+      bars.className = "macro-chart-bars";
+
+      const targetBar = document.createElement("span");
+      targetBar.className = "macro-chart-target";
+      targetBar.style.width = `${percentualMeta}%`;
+
+      const consumedBar = document.createElement("span");
+      consumedBar.className = `macro-chart-consumed ${item.classe}`;
+      consumedBar.style.width = `${percentualConsumido}%`;
+      consumedBar.classList.toggle("macro-chart-over", meta > 0 && consumido > meta);
+
+      bars.appendChild(targetBar);
+      bars.appendChild(consumedBar);
+
+      const percent = document.createElement("span");
+      percent.className = "macro-chart-percent";
+      percent.textContent = meta > 0 ? `${this.formatarNumero(percentualAtingido)}%` : "Sem meta";
+
+      row.appendChild(label);
+      row.appendChild(bars);
+      row.appendChild(percent);
+      container.appendChild(row);
+    });
+
+    const aderenciaMedia = percentuaisComMeta.length
+      ? percentuaisComMeta.reduce((total, percentual) => total + percentual, 0) / percentuaisComMeta.length
+      : 0;
+
+    document.getElementById("dashboardAderenciaMedia").textContent = percentuaisComMeta.length
+      ? `${this.formatarNumero(aderenciaMedia)}% de ader\u00eancia m\u00e9dia`
+      : "Metas n\u00e3o definidas";
+  },
+
   atualizarResumoPorRefeicao(refeicoesPorDia, tiposRefeicao) {
     const container = document.getElementById("resumoRefeicoes");
     container.innerHTML = "";
