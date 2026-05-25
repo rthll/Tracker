@@ -6,9 +6,12 @@ Aplicacao web estatica para cadastro de alimentos e montagem de refeicoes diaria
 
 O projeto foi estruturado com uma abordagem simples em MVC, mantendo responsabilidades separadas entre interface, controle de eventos e dados locais. A proposta e oferecer um fluxo direto para registrar alimentos, adicionar quantidades consumidas e visualizar os totais nutricionais por data.
 
+A interface usa navegacao interna por paginas para separar o fluxo diario das configuracoes: Dashboard, Refeicoes, Alimentos, Metas e Calculadora.
+
 ## Funcionalidades
 
 - Cadastro de alimentos personalizados com macros e calorias por 100g.
+- Navegacao por paginas internas para separar as principais funcoes.
 - Autocomplete para buscar alimentos ao digitar.
 - Favoritos para alimentos usados com frequencia.
 - Historico de alimentos adicionados recentemente.
@@ -69,6 +72,7 @@ Arquivo: `view/view.js`
 Responsavel por:
 
 - Atualizar o autocomplete de alimentos disponiveis.
+- Alternar as paginas internas da aplicacao.
 - Renderizar favoritos, historico e alimentos personalizados.
 - Renderizar os totais por refeicao.
 - Renderizar as barras de progresso das metas diarias.
@@ -86,6 +90,7 @@ Responsavel por:
 
 - Inicializar a aplicacao.
 - Capturar eventos da interface.
+- Controlar a navegacao entre Dashboard, Refeicoes, Alimentos, Metas e Calculadora.
 - Validar os dados informados pelo usuario.
 - Calcular os valores proporcionais da refeicao.
 - Salvar e aplicar as metas diarias.
@@ -98,17 +103,12 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 
 ## Fluxo de uso
 
-1. Selecione a data desejada.
-2. Cadastre um alimento informando os nutrientes por 100g.
-3. Busque um alimento pelo autocomplete, favoritos ou historico.
-4. Escolha a refeicao: cafe da manha, almoco, jantar ou lanches.
-5. Informe a quantidade consumida em gramas.
-6. Adicione o item a refeicao e acompanhe os totais por refeicao e do dia.
-7. Configure as metas diarias para comparar consumo e objetivo.
-8. Use a calculadora TMB para estimar a taxa metabolica basal e aplicar como meta calorica.
-9. Acompanhe a dashboard para ver distribuicao percentual e meta x consumido.
-10. Use o controle de mover na tabela para reorganizar itens entre refeicoes.
-11. Use o botao de repeticao para copiar as refeicoes do dia anterior quando fizer sentido.
+1. Use o Dashboard para registrar rapidamente alimentos nas refeicoes do dia.
+2. Acompanhe no Dashboard calorias, distribuicao percentual e meta x consumido.
+3. Use Refeicoes para revisar, mover ou remover itens.
+4. Use Alimentos para cadastrar alimentos personalizados.
+5. Use Metas para ajustar calorias e macronutrientes.
+6. Use Calculadora para estimar a TMB e aplicar como meta calorica.
 
 ## Melhorias aplicadas nesta versao
 
@@ -120,6 +120,7 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 - Metas diarias de calorias e macronutrientes.
 - Barras de progresso visual para cada macro e calorias.
 - Dashboard organizada com resumo calorico, distribuicao percentual dos macros e grafico de meta x consumido.
+- Reorganizacao da interface em paginas especificas por funcao.
 - Calculadora de taxa metabolica basal com persistencia local e atalho para meta calorica.
 - Movimentacao de itens entre refeicoes.
 - Repeticao das refeicoes anteriores.

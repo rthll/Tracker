@@ -1,9 +1,11 @@
 const Controller = {
   alimentoSelecionadoId: null,
+  paginaAtual: "dashboard",
 
   init() {
     Model.init();
     View.atualizarSelectRefeicoes(Model.getTiposRefeicao());
+    this.registrarNavegacao();
 
     const inputData = document.getElementById("dataSelecionada");
     const campoBusca = document.getElementById("buscaAlimento");
@@ -47,6 +49,38 @@ const Controller = {
     });
 
     this.atualizarView();
+    this.navegarPara(this.obterPaginaInicial(), false);
+  },
+
+  registrarNavegacao() {
+    document.querySelectorAll("[data-page-target]").forEach((botao) => {
+      botao.addEventListener("click", () => {
+        this.navegarPara(botao.dataset.pageTarget);
+      });
+    });
+  },
+
+  obterPaginaInicial() {
+    const hash = window.location && window.location.hash
+      ? window.location.hash.replace("#", "")
+      : "";
+    const paginasValidas = ["dashboard", "refeicoes", "alimentos", "metas", "calculadora"];
+    return paginasValidas.includes(hash) ? hash : "dashboard";
+  },
+
+  navegarPara(pagina, atualizarHash = true) {
+    const paginasValidas = ["dashboard", "refeicoes", "alimentos", "metas", "calculadora"];
+
+    if (!paginasValidas.includes(pagina)) {
+      return;
+    }
+
+    this.paginaAtual = pagina;
+    View.mostrarPagina(pagina);
+
+    if (atualizarHash && window.location) {
+      window.location.hash = pagina;
+    }
   },
 
   obterDataHojeLocal() {
@@ -149,7 +183,10 @@ const Controller = {
 
     this.limparCamposCadastro();
     this.atualizarView();
-    this.selecionarAlimento(alimento.id);
+
+    if (this.paginaAtual === "dashboard") {
+      this.selecionarAlimento(alimento.id);
+    }
   },
 
   limparCamposCadastro() {
@@ -163,6 +200,10 @@ const Controller = {
 
     if (!alimento) {
       return;
+    }
+
+    if (this.paginaAtual !== "dashboard") {
+      this.navegarPara("dashboard");
     }
 
     this.alimentoSelecionadoId = alimento.id;

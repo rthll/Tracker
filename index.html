@@ -19,17 +19,21 @@
     <div class="ambient-shape ambient-shape-right" aria-hidden="true"></div>
 
     <section class="app-card">
-      <header class="hero">
-        <div class="hero-copy">
+      <header class="app-topbar">
+        <div class="brand-block">
           <span class="eyebrow">Tracker nutricional</span>
-          <h1>Controle de macronutrientes com uma interface clara e objetiva.</h1>
-          <p class="hero-text">
-            Cadastre alimentos personalizados, monte a refei&ccedil;&atilde;o do dia e acompanhe carboidratos,
-            prote&iacute;nas, gorduras e calorias sem perder a simplicidade do fluxo.
-          </p>
+          <h1>Macronutrientes</h1>
         </div>
 
-        <div class="date-panel">
+        <nav class="app-nav" aria-label="Navegacao principal">
+          <button class="app-nav-button is-active" type="button" data-page-target="dashboard">Dashboard</button>
+          <button class="app-nav-button" type="button" data-page-target="refeicoes">Refei&ccedil;&otilde;es</button>
+          <button class="app-nav-button" type="button" data-page-target="alimentos">Alimentos</button>
+          <button class="app-nav-button" type="button" data-page-target="metas">Metas</button>
+          <button class="app-nav-button" type="button" data-page-target="calculadora">Calculadora</button>
+        </nav>
+
+        <div class="date-panel date-panel-compact">
           <p class="date-panel-label">Dia selecionado</p>
           <p class="date-panel-value" id="resumoData">Hoje</p>
           <label for="dataSelecionada" class="form-label">Selecionar data</label>
@@ -37,340 +41,391 @@
         </div>
       </header>
 
-      <section class="content-grid">
-        <article class="panel">
-          <div class="panel-heading">
-            <div>
-              <span class="panel-kicker">Cadastro</span>
-              <h2>Cadastrar alimento</h2>
-            </div>
-            <p>Informe os valores por 100g para usar o alimento nos registros di&aacute;rios.</p>
-          </div>
-
-          <div class="form-grid">
-            <div class="field-group span-12">
-              <label for="nome" class="form-label">Nome do alimento</label>
-              <input type="text" id="nome" class="form-control" placeholder="Ex.: Frango grelhado">
-            </div>
-
-            <div class="field-group span-6 span-md-3">
-              <label for="carboidratos" class="form-label">Carboidratos</label>
-              <input type="number" id="carboidratos" class="form-control" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-            </div>
-
-            <div class="field-group span-6 span-md-3">
-              <label for="proteinas" class="form-label">Prote&iacute;nas</label>
-              <input type="number" id="proteinas" class="form-control" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-            </div>
-
-            <div class="field-group span-6 span-md-3">
-              <label for="gorduras" class="form-label">Gorduras</label>
-              <input type="number" id="gorduras" class="form-control" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-            </div>
-
-            <div class="field-group span-6 span-md-3">
-              <label for="calorias" class="form-label">Calorias</label>
-              <input type="number" id="calorias" class="form-control" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-            </div>
-
-            <div class="field-group span-12">
-              <button class="btn btn-primary w-100" id="btnCadastrar" type="button">Cadastrar alimento</button>
-            </div>
-
-            <div class="field-group span-12 quick-block">
-              <div class="quick-block-heading">
-                <h3>Alimentos personalizados</h3>
-                <span><strong id="contadorAlimentos">0</strong> cadastrados</span>
-              </div>
-              <div class="chip-list" id="listaPersonalizados"></div>
-            </div>
-          </div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-heading">
-            <div>
-              <span class="panel-kicker">Registro</span>
-              <h2>Adicionar &agrave; refei&ccedil;&atilde;o</h2>
-            </div>
-            <p>Selecione um alimento cadastrado e registre a quantidade consumida em gramas.</p>
-          </div>
-
-          <div class="form-grid">
-            <div class="field-group span-12">
-              <label for="buscaAlimento" class="form-label">Buscar alimento</label>
-              <div class="food-search-row">
-                <input type="text" id="buscaAlimento" class="form-control" list="sugestoesAlimentos" autocomplete="off" placeholder="Digite para buscar um alimento">
-                <button class="favorite-toggle" id="btnFavoritar" type="button" aria-label="Favoritar alimento selecionado" title="Favoritar alimento">&#9734;</button>
-              </div>
-              <datalist id="sugestoesAlimentos"></datalist>
-              <p class="field-hint" id="detalheAlimentoSelecionado">Selecione um alimento cadastrado para adicionar &agrave; refei&ccedil;&atilde;o.</p>
-            </div>
-
-            <div class="field-group span-12 span-md-6">
-              <label for="tipoRefeicao" class="form-label">Refei&ccedil;&atilde;o</label>
-              <select id="tipoRefeicao" class="form-select"></select>
-            </div>
-
-            <div class="field-group span-12 span-md-6">
-              <label for="quantidade" class="form-label">Quantidade (g)</label>
-              <input type="number" id="quantidade" class="form-control" placeholder="Ex.: 150" min="0.01" step="0.01" inputmode="decimal">
-            </div>
-
-            <div class="field-group span-12 align-end">
-              <button class="btn btn-accent w-100" id="btnAdicionar" type="button">Adicionar &agrave; refei&ccedil;&atilde;o</button>
-            </div>
-
-            <div class="field-group span-12 shortcuts-grid">
-              <div class="quick-block">
-                <div class="quick-block-heading">
-                  <h3>Favoritos</h3>
-                </div>
-                <div class="chip-list" id="listaFavoritos"></div>
-              </div>
-
-              <div class="quick-block">
-                <div class="quick-block-heading">
-                  <h3>Recentes</h3>
-                </div>
-                <div class="chip-list" id="listaHistorico"></div>
-              </div>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section class="summary-grid" aria-label="Resumo nutricional do dia">
-        <article class="summary-card">
-          <span class="summary-label">Carboidratos</span>
-          <div class="summary-value"><span id="totalCarboResumo">0.00</span><small>g</small></div>
-        </article>
-
-        <article class="summary-card">
-          <span class="summary-label">Prote&iacute;nas</span>
-          <div class="summary-value"><span id="totalProteinaResumo">0.00</span><small>g</small></div>
-        </article>
-
-        <article class="summary-card">
-          <span class="summary-label">Gorduras</span>
-          <div class="summary-value"><span id="totalGorduraResumo">0.00</span><small>g</small></div>
-        </article>
-
-        <article class="summary-card summary-card-highlight">
-          <span class="summary-label">Calorias</span>
-          <div class="summary-value"><span id="totalCaloriasResumo">0.00</span><small>kcal</small></div>
-        </article>
-      </section>
-
-      <section class="dashboard-panel" aria-label="Dashboard nutricional do dia">
-        <div class="panel-heading dashboard-heading">
+      <section class="page-view is-active" id="page-dashboard" data-page="dashboard">
+        <div class="page-heading">
           <div>
             <span class="panel-kicker">Dashboard</span>
-            <h2>Vis&atilde;o do dia</h2>
+            <h2>Uso di&aacute;rio</h2>
           </div>
-          <p id="dashboardStatus">Defina metas e registre alimentos para acompanhar o progresso.</p>
+          <p>Resumo do dia e registro r&aacute;pido de alimento em uma refei&ccedil;&atilde;o.</p>
         </div>
 
-        <div class="dashboard-grid">
-          <article class="dashboard-metric dashboard-metric-main">
-            <span class="dashboard-label">Calorias consumidas</span>
-            <div class="dashboard-main-value"><span id="dashboardCaloriasConsumidas">0.00</span><small>kcal</small></div>
-            <div class="dashboard-meta-row">
-              <span id="dashboardCaloriasMeta">Meta: 0.00 kcal</span>
-              <strong id="dashboardCaloriasRestantes">Meta n&atilde;o definida</strong>
+        <section class="daily-layout">
+          <article class="panel quick-add-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker">Registro</span>
+                <h2>Adicionar alimento</h2>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field-group span-12">
+                <label for="buscaAlimento" class="form-label">Buscar alimento</label>
+                <div class="food-search-row">
+                  <input type="text" id="buscaAlimento" class="form-control" list="sugestoesAlimentos" autocomplete="off" placeholder="Digite para buscar um alimento">
+                  <button class="favorite-toggle" id="btnFavoritar" type="button" aria-label="Favoritar alimento selecionado" title="Favoritar alimento">&#9734;</button>
+                </div>
+                <datalist id="sugestoesAlimentos"></datalist>
+                <p class="field-hint" id="detalheAlimentoSelecionado">Selecione um alimento cadastrado para adicionar &agrave; refei&ccedil;&atilde;o.</p>
+              </div>
+
+              <div class="field-group span-12 span-md-6">
+                <label for="tipoRefeicao" class="form-label">Refei&ccedil;&atilde;o</label>
+                <select id="tipoRefeicao" class="form-select"></select>
+              </div>
+
+              <div class="field-group span-12 span-md-6">
+                <label for="quantidade" class="form-label">Quantidade (g)</label>
+                <input type="number" id="quantidade" class="form-control" placeholder="Ex.: 150" min="0.01" step="0.01" inputmode="decimal">
+              </div>
+
+              <div class="field-group span-12 align-end">
+                <button class="btn btn-accent w-100" id="btnAdicionar" type="button">Adicionar &agrave; refei&ccedil;&atilde;o</button>
+              </div>
+
+              <div class="field-group span-12 shortcuts-grid">
+                <div class="quick-block">
+                  <div class="quick-block-heading">
+                    <h3>Favoritos</h3>
+                  </div>
+                  <div class="chip-list" id="listaFavoritos"></div>
+                </div>
+
+                <div class="quick-block">
+                  <div class="quick-block-heading">
+                    <h3>Recentes</h3>
+                  </div>
+                  <div class="chip-list" id="listaHistorico"></div>
+                </div>
+              </div>
             </div>
           </article>
 
-          <article class="dashboard-metric">
-            <span class="dashboard-label">Distribui&ccedil;&atilde;o dos macros</span>
-            <div class="macro-stack" aria-hidden="true">
-              <span class="macro-stack-segment macro-carbs" id="dashboardDistribuicaoCarbs"></span>
-              <span class="macro-stack-segment macro-protein" id="dashboardDistribuicaoProteinas"></span>
-              <span class="macro-stack-segment macro-fat" id="dashboardDistribuicaoGorduras"></span>
-            </div>
-            <div class="macro-distribution-list">
-              <div><span>Carboidratos</span><strong id="dashboardPercentualCarbs">0.00%</strong></div>
-              <div><span>Prote&iacute;nas</span><strong id="dashboardPercentualProteinas">0.00%</strong></div>
-              <div><span>Gorduras</span><strong id="dashboardPercentualGorduras">0.00%</strong></div>
-            </div>
-          </article>
-        </div>
+          <div class="dashboard-stack">
+            <section class="summary-grid" aria-label="Resumo nutricional do dia">
+              <article class="summary-card">
+                <span class="summary-label">Carboidratos</span>
+                <div class="summary-value"><span id="totalCarboResumo">0.00</span><small>g</small></div>
+              </article>
 
-        <div class="dashboard-chart-panel">
-          <div class="dashboard-chart-heading">
-            <span class="dashboard-label">Meta x consumido</span>
-            <strong id="dashboardAderenciaMedia">0.00% de ader&ecirc;ncia m&eacute;dia</strong>
+              <article class="summary-card">
+                <span class="summary-label">Prote&iacute;nas</span>
+                <div class="summary-value"><span id="totalProteinaResumo">0.00</span><small>g</small></div>
+              </article>
+
+              <article class="summary-card">
+                <span class="summary-label">Gorduras</span>
+                <div class="summary-value"><span id="totalGorduraResumo">0.00</span><small>g</small></div>
+              </article>
+
+              <article class="summary-card summary-card-highlight">
+                <span class="summary-label">Calorias</span>
+                <div class="summary-value"><span id="totalCaloriasResumo">0.00</span><small>kcal</small></div>
+              </article>
+            </section>
+
+            <section class="dashboard-panel" aria-label="Dashboard nutricional do dia">
+              <div class="panel-heading dashboard-heading">
+                <div>
+                  <span class="panel-kicker">Vis&atilde;o do dia</span>
+                  <h2>Progresso</h2>
+                </div>
+                <p id="dashboardStatus">Defina metas e registre alimentos para acompanhar o progresso.</p>
+              </div>
+
+              <div class="dashboard-grid">
+                <article class="dashboard-metric dashboard-metric-main">
+                  <span class="dashboard-label">Calorias consumidas</span>
+                  <div class="dashboard-main-value"><span id="dashboardCaloriasConsumidas">0.00</span><small>kcal</small></div>
+                  <div class="dashboard-meta-row">
+                    <span id="dashboardCaloriasMeta">Meta: 0.00 kcal</span>
+                    <strong id="dashboardCaloriasRestantes">Meta n&atilde;o definida</strong>
+                  </div>
+                </article>
+
+                <article class="dashboard-metric">
+                  <span class="dashboard-label">Distribui&ccedil;&atilde;o dos macros</span>
+                  <div class="macro-stack" aria-hidden="true">
+                    <span class="macro-stack-segment macro-carbs" id="dashboardDistribuicaoCarbs"></span>
+                    <span class="macro-stack-segment macro-protein" id="dashboardDistribuicaoProteinas"></span>
+                    <span class="macro-stack-segment macro-fat" id="dashboardDistribuicaoGorduras"></span>
+                  </div>
+                  <div class="macro-distribution-list">
+                    <div><span>Carboidratos</span><strong id="dashboardPercentualCarbs">0.00%</strong></div>
+                    <div><span>Prote&iacute;nas</span><strong id="dashboardPercentualProteinas">0.00%</strong></div>
+                    <div><span>Gorduras</span><strong id="dashboardPercentualGorduras">0.00%</strong></div>
+                  </div>
+                </article>
+              </div>
+
+              <div class="dashboard-chart-panel">
+                <div class="dashboard-chart-heading">
+                  <span class="dashboard-label">Meta x consumido</span>
+                  <strong id="dashboardAderenciaMedia">0.00% de ader&ecirc;ncia m&eacute;dia</strong>
+                </div>
+                <div class="macro-target-chart" id="dashboardMacroTargetChart"></div>
+              </div>
+            </section>
           </div>
-          <div class="macro-target-chart" id="dashboardMacroTargetChart"></div>
-        </div>
+        </section>
       </section>
 
-      <section class="bmr-panel" aria-label="Calculadora de taxa metabolica basal">
-        <div class="panel-heading bmr-heading">
+      <section class="page-view" id="page-refeicoes" data-page="refeicoes" hidden>
+        <div class="page-heading">
+          <div>
+            <span class="panel-kicker">Refei&ccedil;&otilde;es</span>
+            <h2>Organiza&ccedil;&atilde;o do dia</h2>
+          </div>
+          <button class="btn btn-outline-secondary btn-compact" id="btnRepetirRefeicao" type="button">Repetir refei&ccedil;&otilde;es anteriores</button>
+        </div>
+
+        <section class="meal-summary-grid" id="resumoRefeicoes" aria-label="Resumo por refeicao"></section>
+
+        <section class="panel panel-table">
+          <div class="panel-heading panel-heading-table">
+            <div>
+              <span class="panel-kicker">Acompanhamento</span>
+              <h2 id="tituloRefeicao">Refei&ccedil;&otilde;es do dia</h2>
+            </div>
+            <p>Itens adicionados, totais nutricionais e movimenta&ccedil;&atilde;o entre refei&ccedil;&otilde;es.</p>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Refei&ccedil;&atilde;o</th>
+                  <th>Alimento</th>
+                  <th>Qtd</th>
+                  <th>Carbs</th>
+                  <th>Prot</th>
+                  <th>Gord</th>
+                  <th>Cal</th>
+                  <th class="text-center">A&ccedil;&atilde;o</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaRefeicao"></tbody>
+              <tfoot>
+                <tr>
+                  <th colspan="3">Total</th>
+                  <th id="totalCarbo">0.00</th>
+                  <th id="totalProteina">0.00</th>
+                  <th id="totalGordura">0.00</th>
+                  <th id="totalCalorias">0.00</th>
+                  <th></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="page-view" id="page-alimentos" data-page="alimentos" hidden>
+        <div class="page-heading">
+          <div>
+            <span class="panel-kicker">Alimentos</span>
+            <h2>Cadastro e favoritos</h2>
+          </div>
+          <p>Cadastre os valores por 100g e use os alimentos no registro r&aacute;pido.</p>
+        </div>
+
+        <section class="content-grid single-page-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker">Cadastro</span>
+                <h2>Cadastrar alimento</h2>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field-group span-12">
+                <label for="nome" class="form-label">Nome do alimento</label>
+                <input type="text" id="nome" class="form-control" placeholder="Ex.: Frango grelhado">
+              </div>
+
+              <div class="field-group span-6 span-md-3">
+                <label for="carboidratos" class="form-label">Carboidratos</label>
+                <input type="number" id="carboidratos" class="form-control" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+              </div>
+
+              <div class="field-group span-6 span-md-3">
+                <label for="proteinas" class="form-label">Prote&iacute;nas</label>
+                <input type="number" id="proteinas" class="form-control" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+              </div>
+
+              <div class="field-group span-6 span-md-3">
+                <label for="gorduras" class="form-label">Gorduras</label>
+                <input type="number" id="gorduras" class="form-control" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+              </div>
+
+              <div class="field-group span-6 span-md-3">
+                <label for="calorias" class="form-label">Calorias</label>
+                <input type="number" id="calorias" class="form-control" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+              </div>
+
+              <div class="field-group span-12">
+                <button class="btn btn-primary w-100" id="btnCadastrar" type="button">Cadastrar alimento</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="quick-block-heading">
+              <h3>Alimentos personalizados</h3>
+              <span><strong id="contadorAlimentos">0</strong> cadastrados</span>
+            </div>
+            <div class="chip-list food-library" id="listaPersonalizados"></div>
+          </article>
+        </section>
+      </section>
+
+      <section class="page-view" id="page-metas" data-page="metas" hidden>
+        <div class="page-heading">
+          <div>
+            <span class="panel-kicker">Metas</span>
+            <h2>Calorias e macronutrientes</h2>
+          </div>
+          <p>Defina os objetivos di&aacute;rios usados nos gr&aacute;ficos e barras de progresso.</p>
+        </div>
+
+        <section class="goals-panel" aria-label="Metas diarias">
+          <div class="panel-heading goals-heading">
+            <div>
+              <span class="panel-kicker">Configura&ccedil;&atilde;o</span>
+              <h2>Metas di&aacute;rias</h2>
+            </div>
+            <button class="btn btn-primary btn-compact" id="btnSalvarMetas" type="button">Salvar metas</button>
+          </div>
+
+          <div class="goals-form">
+            <div class="field-group">
+              <label for="metaCarboidratos" class="form-label">Carboidratos (g)</label>
+              <input type="number" id="metaCarboidratos" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
+            </div>
+
+            <div class="field-group">
+              <label for="metaProteinas" class="form-label">Prote&iacute;nas (g)</label>
+              <input type="number" id="metaProteinas" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
+            </div>
+
+            <div class="field-group">
+              <label for="metaGorduras" class="form-label">Gorduras (g)</label>
+              <input type="number" id="metaGorduras" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
+            </div>
+
+            <div class="field-group">
+              <label for="metaCalorias" class="form-label">Calorias (kcal)</label>
+              <input type="number" id="metaCalorias" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
+            </div>
+          </div>
+
+          <div class="goal-progress-grid">
+            <article class="goal-progress-card">
+              <div class="goal-progress-header">
+                <span>Carboidratos</span>
+                <strong id="progressoCarboidratosTexto">0.00 / 0.00 g</strong>
+              </div>
+              <div class="progress-track" aria-hidden="true">
+                <span class="progress-fill progress-carbs" id="progressoCarboidratosBarra"></span>
+              </div>
+              <span class="goal-progress-detail" id="progressoCarboidratosDetalhe">Meta n&atilde;o definida</span>
+            </article>
+
+            <article class="goal-progress-card">
+              <div class="goal-progress-header">
+                <span>Prote&iacute;nas</span>
+                <strong id="progressoProteinasTexto">0.00 / 0.00 g</strong>
+              </div>
+              <div class="progress-track" aria-hidden="true">
+                <span class="progress-fill progress-protein" id="progressoProteinasBarra"></span>
+              </div>
+              <span class="goal-progress-detail" id="progressoProteinasDetalhe">Meta n&atilde;o definida</span>
+            </article>
+
+            <article class="goal-progress-card">
+              <div class="goal-progress-header">
+                <span>Gorduras</span>
+                <strong id="progressoGordurasTexto">0.00 / 0.00 g</strong>
+              </div>
+              <div class="progress-track" aria-hidden="true">
+                <span class="progress-fill progress-fat" id="progressoGordurasBarra"></span>
+              </div>
+              <span class="goal-progress-detail" id="progressoGordurasDetalhe">Meta n&atilde;o definida</span>
+            </article>
+
+            <article class="goal-progress-card">
+              <div class="goal-progress-header">
+                <span>Calorias</span>
+                <strong id="progressoCaloriasTexto">0.00 / 0.00 kcal</strong>
+              </div>
+              <div class="progress-track" aria-hidden="true">
+                <span class="progress-fill progress-calories" id="progressoCaloriasBarra"></span>
+              </div>
+              <span class="goal-progress-detail" id="progressoCaloriasDetalhe">Meta n&atilde;o definida</span>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <section class="page-view" id="page-calculadora" data-page="calculadora" hidden>
+        <div class="page-heading">
           <div>
             <span class="panel-kicker">Calculadora</span>
             <h2>Taxa metab&oacute;lica basal</h2>
           </div>
-          <span class="bmr-method">Mifflin-St Jeor</span>
+          <p>Estimativa por Mifflin-St Jeor para orientar a meta cal&oacute;rica.</p>
         </div>
 
-        <div class="bmr-grid">
-          <div class="bmr-form">
-            <div class="field-group">
-              <label for="tmbSexo" class="form-label">Sexo</label>
-              <select id="tmbSexo" class="form-select">
-                <option value="">Selecione</option>
-                <option value="masculino">Masculino</option>
-                <option value="feminino">Feminino</option>
-              </select>
+        <section class="bmr-panel" aria-label="Calculadora de taxa metabolica basal">
+          <div class="panel-heading bmr-heading">
+            <div>
+              <span class="panel-kicker">M&eacute;todo</span>
+              <h2>Mifflin-St Jeor</h2>
             </div>
-
-            <div class="field-group">
-              <label for="tmbPeso" class="form-label">Peso (kg)</label>
-              <input type="number" id="tmbPeso" class="form-control" placeholder="Ex.: 78" min="1" step="0.01" inputmode="decimal">
-            </div>
-
-            <div class="field-group">
-              <label for="tmbAltura" class="form-label">Altura (cm)</label>
-              <input type="number" id="tmbAltura" class="form-control" placeholder="Ex.: 175" min="1" step="0.1" inputmode="decimal">
-            </div>
-
-            <div class="field-group">
-              <label for="tmbIdade" class="form-label">Idade</label>
-              <input type="number" id="tmbIdade" class="form-control" placeholder="Ex.: 30" min="1" step="1" inputmode="numeric">
-            </div>
-
-            <div class="field-group bmr-actions">
-              <button class="btn btn-primary w-100" id="btnCalcularTmb" type="button">Calcular TMB</button>
-            </div>
+            <span class="bmr-method">TMB estimada</span>
           </div>
 
-          <article class="bmr-result-card">
-            <span class="dashboard-label">TMB estimada</span>
-            <div class="bmr-result-value"><span id="tmbResultado">0.00</span><small>kcal/dia</small></div>
-            <p id="tmbDetalhe">Informe os dados para calcular.</p>
-            <button class="btn btn-outline-secondary btn-compact" id="btnUsarTmbMeta" type="button">Usar como meta de calorias</button>
-          </article>
-        </div>
-      </section>
+          <div class="bmr-grid">
+            <div class="bmr-form">
+              <div class="field-group">
+                <label for="tmbSexo" class="form-label">Sexo</label>
+                <select id="tmbSexo" class="form-select">
+                  <option value="">Selecione</option>
+                  <option value="masculino">Masculino</option>
+                  <option value="feminino">Feminino</option>
+                </select>
+              </div>
 
-      <section class="goals-panel" aria-label="Metas diarias">
-        <div class="panel-heading goals-heading">
-          <div>
-            <span class="panel-kicker">Metas</span>
-            <h2>Metas di&aacute;rias</h2>
+              <div class="field-group">
+                <label for="tmbPeso" class="form-label">Peso (kg)</label>
+                <input type="number" id="tmbPeso" class="form-control" placeholder="Ex.: 78" min="1" step="0.01" inputmode="decimal">
+              </div>
+
+              <div class="field-group">
+                <label for="tmbAltura" class="form-label">Altura (cm)</label>
+                <input type="number" id="tmbAltura" class="form-control" placeholder="Ex.: 175" min="1" step="0.1" inputmode="decimal">
+              </div>
+
+              <div class="field-group">
+                <label for="tmbIdade" class="form-label">Idade</label>
+                <input type="number" id="tmbIdade" class="form-control" placeholder="Ex.: 30" min="1" step="1" inputmode="numeric">
+              </div>
+
+              <div class="field-group bmr-actions">
+                <button class="btn btn-primary w-100" id="btnCalcularTmb" type="button">Calcular TMB</button>
+              </div>
+            </div>
+
+            <article class="bmr-result-card">
+              <span class="dashboard-label">TMB estimada</span>
+              <div class="bmr-result-value"><span id="tmbResultado">0.00</span><small>kcal/dia</small></div>
+              <p id="tmbDetalhe">Informe os dados para calcular.</p>
+              <button class="btn btn-outline-secondary btn-compact" id="btnUsarTmbMeta" type="button">Usar como meta de calorias</button>
+            </article>
           </div>
-          <button class="btn btn-primary btn-compact" id="btnSalvarMetas" type="button">Salvar metas</button>
-        </div>
-
-        <div class="goals-form">
-          <div class="field-group">
-            <label for="metaCarboidratos" class="form-label">Carboidratos (g)</label>
-            <input type="number" id="metaCarboidratos" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
-          </div>
-
-          <div class="field-group">
-            <label for="metaProteinas" class="form-label">Prote&iacute;nas (g)</label>
-            <input type="number" id="metaProteinas" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
-          </div>
-
-          <div class="field-group">
-            <label for="metaGorduras" class="form-label">Gorduras (g)</label>
-            <input type="number" id="metaGorduras" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
-          </div>
-
-          <div class="field-group">
-            <label for="metaCalorias" class="form-label">Calorias (kcal)</label>
-            <input type="number" id="metaCalorias" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
-          </div>
-        </div>
-
-        <div class="goal-progress-grid">
-          <article class="goal-progress-card">
-            <div class="goal-progress-header">
-              <span>Carboidratos</span>
-              <strong id="progressoCarboidratosTexto">0.00 / 0.00 g</strong>
-            </div>
-            <div class="progress-track" aria-hidden="true">
-              <span class="progress-fill progress-carbs" id="progressoCarboidratosBarra"></span>
-            </div>
-            <span class="goal-progress-detail" id="progressoCarboidratosDetalhe">Meta n&atilde;o definida</span>
-          </article>
-
-          <article class="goal-progress-card">
-            <div class="goal-progress-header">
-              <span>Prote&iacute;nas</span>
-              <strong id="progressoProteinasTexto">0.00 / 0.00 g</strong>
-            </div>
-            <div class="progress-track" aria-hidden="true">
-              <span class="progress-fill progress-protein" id="progressoProteinasBarra"></span>
-            </div>
-            <span class="goal-progress-detail" id="progressoProteinasDetalhe">Meta n&atilde;o definida</span>
-          </article>
-
-          <article class="goal-progress-card">
-            <div class="goal-progress-header">
-              <span>Gorduras</span>
-              <strong id="progressoGordurasTexto">0.00 / 0.00 g</strong>
-            </div>
-            <div class="progress-track" aria-hidden="true">
-              <span class="progress-fill progress-fat" id="progressoGordurasBarra"></span>
-            </div>
-            <span class="goal-progress-detail" id="progressoGordurasDetalhe">Meta n&atilde;o definida</span>
-          </article>
-
-          <article class="goal-progress-card">
-            <div class="goal-progress-header">
-              <span>Calorias</span>
-              <strong id="progressoCaloriasTexto">0.00 / 0.00 kcal</strong>
-            </div>
-            <div class="progress-track" aria-hidden="true">
-              <span class="progress-fill progress-calories" id="progressoCaloriasBarra"></span>
-            </div>
-            <span class="goal-progress-detail" id="progressoCaloriasDetalhe">Meta n&atilde;o definida</span>
-          </article>
-        </div>
-      </section>
-
-      <section class="meal-summary-grid" id="resumoRefeicoes" aria-label="Resumo por refeicao"></section>
-
-      <section class="panel panel-table">
-        <div class="panel-heading panel-heading-table">
-          <div>
-            <span class="panel-kicker">Acompanhamento</span>
-            <h2 id="tituloRefeicao">Refei&ccedil;&otilde;es do dia</h2>
-          </div>
-          <p>Vis&atilde;o consolidada dos alimentos adicionados e seus totais nutricionais.</p>
-          <button class="btn btn-outline-secondary btn-compact" id="btnRepetirRefeicao" type="button">Repetir refei&ccedil;&otilde;es anteriores</button>
-        </div>
-
-        <div class="table-responsive">
-          <table class="table align-middle mb-0">
-            <thead>
-              <tr>
-                <th>Refei&ccedil;&atilde;o</th>
-                <th>Alimento</th>
-                <th>Qtd</th>
-                <th>Carbs</th>
-                <th>Prot</th>
-                <th>Gord</th>
-                <th>Cal</th>
-                <th class="text-center">A&ccedil;&atilde;o</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaRefeicao"></tbody>
-            <tfoot>
-              <tr>
-                <th colspan="3">Total</th>
-                <th id="totalCarbo">0.00</th>
-                <th id="totalProteina">0.00</th>
-                <th id="totalGordura">0.00</th>
-                <th id="totalCalorias">0.00</th>
-                <th></th>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+        </section>
       </section>
     </section>
   </main>

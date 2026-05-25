@@ -1,4 +1,18 @@
 const View = {
+  mostrarPagina(paginaAtiva) {
+    document.querySelectorAll(".page-view").forEach((pagina) => {
+      const ativa = pagina.dataset.page === paginaAtiva;
+      pagina.hidden = !ativa;
+      pagina.classList.toggle("is-active", ativa);
+    });
+
+    document.querySelectorAll("[data-page-target]").forEach((botao) => {
+      const ativo = botao.dataset.pageTarget === paginaAtiva;
+      botao.classList.toggle("is-active", ativo);
+      botao.setAttribute("aria-current", ativo ? "page" : "false");
+    });
+  },
+
   atualizarCabecalhos(dataFormatada) {
     document.getElementById("resumoData").textContent = dataFormatada;
     document.getElementById("tituloRefeicao").textContent = `Refei\u00e7\u00f5es de ${dataFormatada}`;
