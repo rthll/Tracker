@@ -3,6 +3,7 @@ const Controller = {
 
   init() {
     Model.init();
+    View.atualizarSelectRefeicoes(Model.getTiposRefeicao());
 
     const inputData = document.getElementById("dataSelecionada");
     const campoBusca = document.getElementById("buscaAlimento");
@@ -60,6 +61,10 @@ const Controller = {
 
   getDataAtual() {
     return document.getElementById("dataSelecionada").value || this.obterDataHojeLocal();
+  },
+
+  getRefeicaoSelecionada() {
+    return document.getElementById("tipoRefeicao").value || Model.refeicaoPadrao;
   },
 
   formatarDataExibicao(data) {
@@ -158,7 +163,7 @@ const Controller = {
     }
 
     const fator = quantidade / 100;
-    Model.adicionarRefeicao(this.getDataAtual(), {
+    Model.adicionarRefeicao(this.getDataAtual(), this.getRefeicaoSelecionada(), {
       alimentoId: alimentoBase.id,
       nome: alimentoBase.nome,
       quantidade,
@@ -189,16 +194,16 @@ const Controller = {
   repetirRefeicaoAnterior() {
     const dataAtual = this.getDataAtual();
     const dataAnterior = this.obterDataAnterior(dataAtual);
-    const refeicaoAnterior = Model.getRefeicao(dataAnterior);
+    const quantidadeItensAnterior = Model.getQuantidadeItensDia(dataAnterior);
 
-    if (!refeicaoAnterior.length) {
+    if (!quantidadeItensAnterior) {
       alert("N\u00e3o h\u00e1 refei\u00e7\u00e3o anterior para repetir.");
       return;
     }
 
-    const refeicaoAtual = Model.getRefeicao(dataAtual);
-    const deveContinuar = !refeicaoAtual.length || confirm(
-      "A refei\u00e7\u00e3o atual j\u00e1 possui itens. Deseja adicionar os itens da refei\u00e7\u00e3o anterior mesmo assim?"
+    const quantidadeItensAtual = Model.getQuantidadeItensDia(dataAtual);
+    const deveContinuar = !quantidadeItensAtual || confirm(
+      "O dia atual j\u00e1 possui itens. Deseja adicionar as refei\u00e7\u00f5es do dia anterior mesmo assim?"
     );
 
     if (!deveContinuar) {
@@ -209,8 +214,13 @@ const Controller = {
     this.atualizarView();
   },
 
-  removerItem(index) {
-    Model.removerItem(this.getDataAtual(), index);
+  moverItem(refeicaoOrigemId, index, refeicaoDestinoId) {
+    Model.moverItem(this.getDataAtual(), refeicaoOrigemId, index, refeicaoDestinoId);
+    this.atualizarView();
+  },
+
+  removerItem(refeicaoId, index) {
+    Model.removerItem(this.getDataAtual(), refeicaoId, index);
     this.atualizarView();
   },
 
@@ -223,8 +233,9 @@ const Controller = {
     View.atualizarAutocompleteAlimentos(Model.getAlimentos());
     View.atualizarAtalhosAlimentos(Model.getFavoritos(), Model.getHistoricoAlimentos());
     View.atualizarAlimentosPersonalizados(Model.getAlimentos());
-    View.atualizarBotaoRepetir(Model.getRefeicao(dataAnterior).length);
-    View.atualizarTabelaRefeicao(Model.getRefeicao(dataAtual));
+    View.atualizarBotaoRepetir(Model.getQuantidadeItensDia(dataAnterior));
+    View.atualizarResumoPorRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());
+    View.atualizarTabelaRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());
     this.sincronizarAlimentoSelecionado();
   }
 };

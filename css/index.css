@@ -439,6 +439,52 @@ body {
   margin-bottom: 24px;
 }
 
+.meal-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.meal-summary-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(37, 62, 78, 0.1);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-panel);
+}
+
+.meal-summary-name,
+.meal-summary-count {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.meal-summary-calories {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-primary);
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.meal-summary-macros {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.meal-summary-count {
+  margin-top: 10px;
+  text-transform: none;
+}
+
 .summary-card {
   padding: 18px 20px;
   border: 1px solid rgba(29, 107, 87, 0.12);
@@ -544,6 +590,26 @@ body {
   text-align: center;
 }
 
+.actions-cell {
+  min-width: 180px;
+}
+
+.actions-cell-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.move-select {
+  min-width: 112px;
+  min-height: 38px;
+  padding: 6px 32px 6px 10px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .remover {
   display: inline-flex;
   align-items: center;
@@ -568,7 +634,8 @@ body {
 @media (max-width: 991px) {
   .hero,
   .content-grid,
-  .summary-grid {
+  .summary-grid,
+  .meal-summary-grid {
     grid-template-columns: 1fr;
   }
 

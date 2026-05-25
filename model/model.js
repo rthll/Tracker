@@ -5,6 +5,13 @@ const Model = {
   favoritos: [],
   historicoAlimentos: [],
   limiteHistorico: 8,
+  tiposRefeicao: [
+    { id: "cafe", nome: "Caf\u00e9 da manh\u00e3" },
+    { id: "almoco", nome: "Almo\u00e7o" },
+    { id: "jantar", nome: "Jantar" },
+    { id: "lanches", nome: "Lanches" }
+  ],
+  refeicaoPadrao: "almoco",
 
   init() {
     this.carregar();
@@ -48,6 +55,25 @@ const Model = {
     }
   },
 
+  getTiposRefeicao() {
+    return this.tiposRefeicao.map((refeicao) => ({ ...refeicao }));
+  },
+
+  isTipoRefeicaoValido(refeicaoId) {
+    return this.tiposRefeicao.some((refeicao) => refeicao.id === refeicaoId);
+  },
+
+  normalizarRefeicaoId(refeicaoId) {
+    return this.isTipoRefeicaoValido(refeicaoId) ? refeicaoId : this.refeicaoPadrao;
+  },
+
+  criarRefeicoesVazias() {
+    return this.tiposRefeicao.reduce((resultado, refeicao) => {
+      resultado[refeicao.id] = [];
+      return resultado;
+    }, {});
+  },
+
   normalizarAlimento(alimento) {
     return {
       id: alimento.id || this.criarId(),
@@ -66,23 +92,43 @@ const Model = {
       return {};
     }
 
-    return Object.entries(refeicoesPorData).reduce((resultado, [data, refeicao]) => {
-      if (!Array.isArray(refeicao)) {
-        return resultado;
-      }
-
-      resultado[data] = refeicao.map((item) => ({
-        alimentoId: item.alimentoId || null,
-        nome: String(item.nome || "").trim(),
-        quantidade: this.valorNumerico(item.quantidade),
-        carboidratos: this.valorNumerico(item.carboidratos),
-        proteinas: this.valorNumerico(item.proteinas),
-        gorduras: this.valorNumerico(item.gorduras),
-        calorias: this.valorNumerico(item.calorias)
-      }));
-
+    return Object.entries(refeicoesPorData).reduce((resultado, [data, refeicaoDia]) => {
+      resultado[data] = this.normalizarRefeicaoDia(refeicaoDia);
       return resultado;
     }, {});
+  },
+
+  normalizarRefeicaoDia(refeicaoDia) {
+    const refeicoes = this.criarRefeicoesVazias();
+
+    if (Array.isArray(refeicaoDia)) {
+      refeicoes[this.refeicaoPadrao] = refeicaoDia.map((item) => this.normalizarItemRefeicao(item));
+      return refeicoes;
+    }
+
+    if (!refeicaoDia || typeof refeicaoDia !== "object") {
+      return refeicoes;
+    }
+
+    this.tiposRefeicao.forEach((refeicao) => {
+      refeicoes[refeicao.id] = Array.isArray(refeicaoDia[refeicao.id])
+        ? refeicaoDia[refeicao.id].map((item) => this.normalizarItemRefeicao(item))
+        : [];
+    });
+
+    return refeicoes;
+  },
+
+  normalizarItemRefeicao(item) {
+    return {
+      alimentoId: item.alimentoId || null,
+      nome: String(item.nome || "").trim(),
+      quantidade: this.valorNumerico(item.quantidade),
+      carboidratos: this.valorNumerico(item.carboidratos),
+      proteinas: this.valorNumerico(item.proteinas),
+      gorduras: this.valorNumerico(item.gorduras),
+      calorias: this.valorNumerico(item.calorias)
+    };
   },
 
   valorNumerico(valor) {
@@ -171,53 +217,101 @@ const Model = {
       .filter(Boolean);
   },
 
-  adicionarRefeicao(data, item) {
+  garantirRefeicoesDoDia(data) {
+    if (!this.refeicoesPorData[data]) {
+      this.refeicoesPorData[data] = this.criarRefeicoesVazias();
+    }
+
+    return this.refeicoesPorData[data];
+  },
+
+  adicionarRefeicao(data, refeicaoId, item) {
     if (!data) {
       return;
     }
 
-    if (!this.refeicoesPorData[data]) {
-      this.refeicoesPorData[data] = [];
-    }
-
-    this.refeicoesPorData[data].push(item);
+    const refeicoesDoDia = this.garantirRefeicoesDoDia(data);
+    const refeicaoNormalizada = this.normalizarRefeicaoId(refeicaoId);
+    refeicoesDoDia[refeicaoNormalizada].push(item);
     this.salvar();
   },
 
-  getRefeicao(data) {
+  getRefeicoesDoDia(data) {
     if (!data) {
-      return [];
+      return this.criarRefeicoesVazias();
     }
 
-    return this.refeicoesPorData[data] || [];
+    return this.refeicoesPorData[data] || this.criarRefeicoesVazias();
+  },
+
+  getRefeicao(data, refeicaoId) {
+    const refeicoesDoDia = this.getRefeicoesDoDia(data);
+
+    if (refeicaoId) {
+      return refeicoesDoDia[this.normalizarRefeicaoId(refeicaoId)] || [];
+    }
+
+    return this.getItensDoDia(data);
+  },
+
+  getItensDoDia(data) {
+    const refeicoesDoDia = this.getRefeicoesDoDia(data);
+    return this.tiposRefeicao.flatMap((refeicao) => refeicoesDoDia[refeicao.id] || []);
+  },
+
+  getQuantidadeItensDia(data) {
+    return this.getItensDoDia(data).length;
   },
 
   repetirRefeicao(dataOrigem, dataDestino) {
-    const refeicaoOrigem = this.getRefeicao(dataOrigem);
+    const refeicoesOrigem = this.getRefeicoesDoDia(dataOrigem);
+    const quantidadeItens = this.getQuantidadeItensDia(dataOrigem);
 
-    if (!refeicaoOrigem.length || !dataDestino) {
+    if (!quantidadeItens || !dataDestino) {
       return 0;
     }
 
-    if (!this.refeicoesPorData[dataDestino]) {
-      this.refeicoesPorData[dataDestino] = [];
-    }
+    const refeicoesDestino = this.garantirRefeicoesDoDia(dataDestino);
 
-    const itensCopiados = refeicaoOrigem.map((item) => ({ ...item }));
-    this.refeicoesPorData[dataDestino].push(...itensCopiados);
+    this.tiposRefeicao.forEach((refeicao) => {
+      const itensCopiados = (refeicoesOrigem[refeicao.id] || []).map((item) => ({ ...item }));
+      refeicoesDestino[refeicao.id].push(...itensCopiados);
 
-    itensCopiados.forEach((item) => {
-      if (item.alimentoId) {
-        this.registrarHistoricoAlimento(item.alimentoId);
-      }
+      itensCopiados.forEach((item) => {
+        if (item.alimentoId) {
+          this.registrarHistoricoAlimento(item.alimentoId);
+        }
+      });
     });
 
     this.salvar();
-    return itensCopiados.length;
+    return quantidadeItens;
   },
 
-  removerItem(data, index) {
-    const refeicao = this.refeicoesPorData[data];
+  moverItem(data, refeicaoOrigemId, index, refeicaoDestinoId) {
+    const origemId = this.normalizarRefeicaoId(refeicaoOrigemId);
+    const destinoId = this.normalizarRefeicaoId(refeicaoDestinoId);
+
+    if (!data || origemId === destinoId) {
+      return false;
+    }
+
+    const refeicoesDoDia = this.garantirRefeicoesDoDia(data);
+    const origem = refeicoesDoDia[origemId];
+    const destino = refeicoesDoDia[destinoId];
+
+    if (!Array.isArray(origem) || !Array.isArray(destino) || index < 0 || index >= origem.length) {
+      return false;
+    }
+
+    const [item] = origem.splice(index, 1);
+    destino.push(item);
+    this.salvar();
+    return true;
+  },
+
+  removerItem(data, refeicaoId, index) {
+    const refeicao = this.getRefeicao(data, refeicaoId);
 
     if (!Array.isArray(refeicao) || index < 0 || index >= refeicao.length) {
       return;

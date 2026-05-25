@@ -12,7 +12,10 @@ O projeto foi estruturado com uma abordagem simples em MVC, mantendo responsabil
 - Autocomplete para buscar alimentos ao digitar.
 - Favoritos para alimentos usados com frequencia.
 - Historico de alimentos adicionados recentemente.
-- Botao para repetir a refeicao do dia anterior.
+- Registro separado por refeicao: cafe da manha, almoco, jantar e lanches.
+- Totais por refeicao e totais consolidados do dia.
+- Movimentacao de alimentos entre refeicoes.
+- Botao para repetir as refeicoes do dia anterior.
 - Persistencia local com `localStorage`.
 - Selecao de uma data para organizar as refeicoes do dia.
 - Calculo proporcional dos nutrientes conforme a quantidade informada.
@@ -45,9 +48,9 @@ Arquivo: `model/model.js`
 Responsavel por armazenar:
 
 - A lista de alimentos cadastrados.
-- As refeicoes agrupadas por data.
+- As refeicoes agrupadas por data e tipo de refeicao.
 - Favoritos e historico de alimentos.
-- As operacoes de adicao, consulta, repeticao e remocao dos dados.
+- As operacoes de adicao, consulta, repeticao, movimentacao e remocao dos dados.
 - A sincronizacao dos dados com `localStorage`.
 
 ### View
@@ -58,7 +61,8 @@ Responsavel por:
 
 - Atualizar o autocomplete de alimentos disponiveis.
 - Renderizar favoritos, historico e alimentos personalizados.
-- Renderizar a tabela da refeicao diaria.
+- Renderizar os totais por refeicao.
+- Renderizar a tabela das refeicoes diarias.
 - Exibir os totais nutricionais da interface.
 - Refletir estados de vazio e feedback visual da pagina.
 
@@ -72,7 +76,7 @@ Responsavel por:
 - Capturar eventos da interface.
 - Validar os dados informados pelo usuario.
 - Calcular os valores proporcionais da refeicao.
-- Orquestrar busca, selecao, favoritos, historico e repeticao entre `Model` e `View`.
+- Orquestrar busca, selecao, favoritos, historico, movimentacao e repeticao entre `Model` e `View`.
 
 ## Como executar
 
@@ -83,16 +87,21 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 1. Selecione a data desejada.
 2. Cadastre um alimento informando os nutrientes por 100g.
 3. Busque um alimento pelo autocomplete, favoritos ou historico.
-4. Informe a quantidade consumida em gramas.
-5. Adicione o item a refeicao e acompanhe os totais do dia.
-6. Use o botao de repeticao para copiar a refeicao do dia anterior quando fizer sentido.
+4. Escolha a refeicao: cafe da manha, almoco, jantar ou lanches.
+5. Informe a quantidade consumida em gramas.
+6. Adicione o item a refeicao e acompanhe os totais por refeicao e do dia.
+7. Use o controle de mover na tabela para reorganizar itens entre refeicoes.
+8. Use o botao de repeticao para copiar as refeicoes do dia anterior quando fizer sentido.
 
 ## Melhorias aplicadas nesta versao
 
 - Autocomplete de alimentos no fluxo de registro.
 - Cadastro persistente de alimentos personalizados.
 - Favoritos e historico de alimentos recentes.
-- Repeticao da refeicao anterior.
+- Registro separado por refeicoes.
+- Totais por refeicao.
+- Movimentacao de itens entre refeicoes.
+- Repeticao das refeicoes anteriores.
 - Persistencia local de alimentos, refeicoes, favoritos e historico.
 - Atualizacao visual da pagina com layout mais moderno e responsivo.
 - Correcao da inicializacao da data para respeitar o horario local.
