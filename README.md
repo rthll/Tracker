@@ -11,6 +11,7 @@ A interface usa navegacao interna por paginas para separar o fluxo diario das co
 ## Funcionalidades
 
 - Cadastro de alimentos personalizados com macros e calorias por 100g.
+- Base TACO importada com alimentos padrao por 100g.
 - Navegacao por paginas internas para separar as principais funcoes.
 - Autocomplete para buscar alimentos ao digitar.
 - Favoritos para alimentos usados com frequencia.
@@ -41,8 +42,13 @@ Tracker/
 |   `-- controller.js
 |-- css/
 |   `-- index.css
+|-- data/
+|   |-- Taco-4a-Edicao(CMVCol taco3).csv
+|   `-- taco-alimentos.js
 |-- model/
 |   `-- model.js
+|-- scripts/
+|   `-- converter-taco.js
 |-- view/
 |   `-- view.js
 |-- index.html
@@ -58,6 +64,7 @@ Arquivo: `model/model.js`
 Responsavel por armazenar:
 
 - A lista de alimentos cadastrados.
+- A base TACO carregada de `data/taco-alimentos.js`.
 - As refeicoes agrupadas por data e tipo de refeicao.
 - As metas diarias de macronutrientes e calorias.
 - O ultimo perfil usado na calculadora de taxa metabolica basal.
@@ -97,6 +104,26 @@ Responsavel por:
 - Calcular TMB e aplicar o resultado como meta calorica quando solicitado.
 - Orquestrar busca, selecao, favoritos, historico, movimentacao e repeticao entre `Model` e `View`.
 
+## Base TACO
+
+O arquivo original da TACO fica em `data/Taco-4a-Edicao(CMVCol taco3).csv`.
+
+Para manter o app funcionando ao abrir diretamente o `index.html`, o CSV e convertido para um arquivo JavaScript estatico:
+
+```bash
+node scripts/converter-taco.js
+```
+
+Esse comando gera `data/taco-alimentos.js` com `window.TACO_ALIMENTOS`.
+
+Regras de IDs:
+
+- Alimentos da TACO usam `taco:<numero>`, exemplo: `taco:1`.
+- Alimentos personalizados usam `custom:<uuid>`.
+- Alimentos personalizados antigos sao migrados automaticamente para o prefixo `custom:`.
+
+Os valores da TACO sao por 100g. Valores `Tr` e `NA` sao tratados como `0` na conversao.
+
 ## Como executar
 
 Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um navegador moderno.
@@ -121,6 +148,7 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 - Barras de progresso visual para cada macro e calorias.
 - Dashboard organizada com resumo calorico, distribuicao percentual dos macros e grafico de meta x consumido.
 - Reorganizacao da interface em paginas especificas por funcao.
+- Importacao da base TACO por script de conversao para uso nativo no autocomplete.
 - Calculadora de taxa metabolica basal com persistencia local e atalho para meta calorica.
 - Movimentacao de itens entre refeicoes.
 - Repeticao das refeicoes anteriores.

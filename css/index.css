@@ -208,6 +208,10 @@ body {
   padding-right: 4px;
 }
 
+.food-base-hint {
+  margin-bottom: 12px;
+}
+
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.85fr);

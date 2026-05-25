@@ -1,6 +1,7 @@
 const Model = {
   storageKey: "trackerMacronutrientes:v1",
-  alimentos: [],
+  alimentosTaco: [],
+  alimentosPersonalizados: [],
   refeicoesPorData: {},
   favoritos: [],
   historicoAlimentos: [],
@@ -27,7 +28,21 @@ const Model = {
   refeicaoPadrao: "almoco",
 
   init() {
+    this.alimentosTaco = this.carregarAlimentosTaco();
     this.carregar();
+  },
+
+  carregarAlimentosTaco() {
+    if (!Array.isArray(window.TACO_ALIMENTOS)) {
+      return [];
+    }
+
+    return window.TACO_ALIMENTOS.map((alimento) => this.normalizarAlimento({
+      ...alimento,
+      id: alimento.id || `taco:${alimento.tacoId}`,
+      personalizado: false,
+      origem: "TACO"
+    }));
   },
 
   carregar() {
@@ -39,8 +54,10 @@ const Model = {
       }
 
       const dados = JSON.parse(dadosSalvos);
-      this.alimentos = Array.isArray(dados.alimentos)
-        ? dados.alimentos.map((alimento) => this.normalizarAlimento(alimento))
+      this.alimentosPersonalizados = Array.isArray(dados.alimentosPersonalizados)
+        ? dados.alimentosPersonalizados.map((alimento) => this.normalizarAlimentoPersonalizado(alimento))
+        : Array.isArray(dados.alimentos)
+          ? dados.alimentos.map((alimento) => this.normalizarAlimentoPersonalizado(alimento))
         : [];
       this.refeicoesPorData = this.normalizarRefeicoes(dados.refeicoesPorData);
       this.favoritos = Array.isArray(dados.favoritos) ? dados.favoritos : [];
@@ -59,7 +76,7 @@ const Model = {
       window.localStorage.setItem(
         this.storageKey,
         JSON.stringify({
-          alimentos: this.alimentos,
+          alimentosPersonalizados: this.alimentosPersonalizados,
           refeicoesPorData: this.refeicoesPorData,
           favoritos: this.favoritos,
           historicoAlimentos: this.historicoAlimentos,
@@ -147,15 +164,44 @@ const Model = {
 
   normalizarAlimento(alimento) {
     return {
-      id: alimento.id || this.criarId(),
+      id: alimento.id || this.criarId("custom"),
       nome: String(alimento.nome || "").trim(),
       carboidratos: this.valorNumerico(alimento.carboidratos),
       proteinas: this.valorNumerico(alimento.proteinas),
       gorduras: this.valorNumerico(alimento.gorduras),
       calorias: this.valorNumerico(alimento.calorias),
+      fibra: this.valorNumerico(alimento.fibra),
       personalizado: alimento.personalizado !== false,
+      origem: alimento.origem || (alimento.personalizado === false ? "TACO" : "Personalizado"),
       criadoEm: alimento.criadoEm || new Date().toISOString()
     };
+  },
+
+  normalizarAlimentoPersonalizado(alimento) {
+    const normalizado = this.normalizarAlimento({
+      ...alimento,
+      personalizado: true,
+      origem: "Personalizado"
+    });
+
+    return {
+      ...normalizado,
+      id: this.normalizarIdPersonalizado(normalizado.id)
+    };
+  },
+
+  normalizarIdPersonalizado(id) {
+    const texto = String(id || "").trim();
+
+    if (texto.startsWith("custom:")) {
+      return texto;
+    }
+
+    if (texto.startsWith("taco:")) {
+      return this.criarId("custom");
+    }
+
+    return `custom:${texto || this.criarIdSemPrefixo()}`;
   },
 
   normalizarRefeicoes(refeicoesPorData) {
@@ -207,7 +253,11 @@ const Model = {
     return Number.isFinite(numero) ? numero : 0;
   },
 
-  criarId() {
+  criarId(prefixo = "custom") {
+    return `${prefixo}:${this.criarIdSemPrefixo()}`;
+  },
+
+  criarIdSemPrefixo() {
     if (window.crypto && typeof window.crypto.randomUUID === "function") {
       return window.crypto.randomUUID();
     }
@@ -222,23 +272,34 @@ const Model = {
   },
 
   adicionarAlimento(alimento) {
-    const alimentoNormalizado = this.normalizarAlimento(alimento);
-    this.alimentos.push(alimentoNormalizado);
+    const alimentoNormalizado = this.normalizarAlimentoPersonalizado(alimento);
+    this.alimentosPersonalizados.push(alimentoNormalizado);
     this.salvar();
     return alimentoNormalizado;
   },
 
   getAlimentos() {
-    return [...this.alimentos].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    return [...this.alimentosTaco, ...this.alimentosPersonalizados]
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  },
+
+  getAlimentosPersonalizados() {
+    return [...this.alimentosPersonalizados]
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  },
+
+  getAlimentosTaco() {
+    return [...this.alimentosTaco]
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   },
 
   getAlimentoPorId(id) {
-    return this.alimentos.find((alimento) => alimento.id === id) || null;
+    return this.getAlimentos().find((alimento) => alimento.id === id) || null;
   },
 
   getAlimentoPorNome(nome) {
     const nomeNormalizado = this.normalizarTexto(nome);
-    return this.alimentos.find((alimento) => this.normalizarTexto(alimento.nome) === nomeNormalizado) || null;
+    return this.getAlimentos().find((alimento) => this.normalizarTexto(alimento.nome) === nomeNormalizado) || null;
   },
 
   alternarFavorito(alimentoId) {

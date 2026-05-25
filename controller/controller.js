@@ -355,7 +355,7 @@ const Controller = {
     View.atualizarCabecalhos(this.formatarDataExibicao(dataAtual));
     View.atualizarAutocompleteAlimentos(Model.getAlimentos());
     View.atualizarAtalhosAlimentos(Model.getFavoritos(), Model.getHistoricoAlimentos());
-    View.atualizarAlimentosPersonalizados(Model.getAlimentos());
+    View.atualizarAlimentosPersonalizados(Model.getAlimentosPersonalizados(), Model.getAlimentosTaco().length);
     View.atualizarBotaoRepetir(Model.getQuantidadeItensDia(dataAnterior));
     View.atualizarCalculadoraTmb(Model.getTmbPerfil());
     View.atualizarMetasDiarias(Model.getMetasDiarias());

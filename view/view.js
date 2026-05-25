@@ -46,7 +46,7 @@ const View = {
     alimentos.forEach((alimento) => {
       const option = document.createElement("option");
       option.value = alimento.nome;
-      option.label = `${this.formatarNumero(alimento.calorias)} kcal | C ${this.formatarNumero(alimento.carboidratos)}g, P ${this.formatarNumero(alimento.proteinas)}g, G ${this.formatarNumero(alimento.gorduras)}g`;
+      option.label = `${alimento.origem || "Base"} | ${this.formatarNumero(alimento.calorias)} kcal | C ${this.formatarNumero(alimento.carboidratos)}g, P ${this.formatarNumero(alimento.proteinas)}g, G ${this.formatarNumero(alimento.gorduras)}g`;
       sugestoes.appendChild(option);
     });
 
@@ -87,9 +87,10 @@ const View = {
     this.renderizarListaChips("listaHistorico", historico, "Sem historico de uso.");
   },
 
-  atualizarAlimentosPersonalizados(alimentos) {
-    document.getElementById("contadorAlimentos").textContent = String(alimentos.length);
-    this.renderizarListaChips("listaPersonalizados", alimentos, "Nenhum alimento personalizado cadastrado.");
+  atualizarAlimentosPersonalizados(alimentosPersonalizados, totalTaco = 0) {
+    document.getElementById("contadorAlimentos").textContent = String(alimentosPersonalizados.length);
+    document.getElementById("contadorTaco").textContent = String(totalTaco);
+    this.renderizarListaChips("listaPersonalizados", alimentosPersonalizados, "Nenhum alimento personalizado cadastrado.");
   },
 
   renderizarListaChips(containerId, alimentos, mensagemVazia) {
@@ -118,7 +119,7 @@ const View = {
 
       const macros = document.createElement("span");
       macros.className = "food-chip-macros";
-      macros.textContent = `${this.formatarNumero(alimento.calorias)} kcal/100g`;
+      macros.textContent = `${alimento.origem || "Base"} | ${this.formatarNumero(alimento.calorias)} kcal/100g`;
 
       button.appendChild(nome);
       button.appendChild(macros);
