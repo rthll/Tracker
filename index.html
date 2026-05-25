@@ -162,6 +162,84 @@
         </article>
       </section>
 
+      <section class="goals-panel" aria-label="Metas diarias">
+        <div class="panel-heading goals-heading">
+          <div>
+            <span class="panel-kicker">Metas</span>
+            <h2>Metas di&aacute;rias</h2>
+          </div>
+          <button class="btn btn-primary btn-compact" id="btnSalvarMetas" type="button">Salvar metas</button>
+        </div>
+
+        <div class="goals-form">
+          <div class="field-group">
+            <label for="metaCarboidratos" class="form-label">Carboidratos (g)</label>
+            <input type="number" id="metaCarboidratos" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
+          </div>
+
+          <div class="field-group">
+            <label for="metaProteinas" class="form-label">Prote&iacute;nas (g)</label>
+            <input type="number" id="metaProteinas" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
+          </div>
+
+          <div class="field-group">
+            <label for="metaGorduras" class="form-label">Gorduras (g)</label>
+            <input type="number" id="metaGorduras" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
+          </div>
+
+          <div class="field-group">
+            <label for="metaCalorias" class="form-label">Calorias (kcal)</label>
+            <input type="number" id="metaCalorias" class="form-control" placeholder="0" min="0" step="0.01" inputmode="decimal">
+          </div>
+        </div>
+
+        <div class="goal-progress-grid">
+          <article class="goal-progress-card">
+            <div class="goal-progress-header">
+              <span>Carboidratos</span>
+              <strong id="progressoCarboidratosTexto">0.00 / 0.00 g</strong>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <span class="progress-fill progress-carbs" id="progressoCarboidratosBarra"></span>
+            </div>
+            <span class="goal-progress-detail" id="progressoCarboidratosDetalhe">Meta n&atilde;o definida</span>
+          </article>
+
+          <article class="goal-progress-card">
+            <div class="goal-progress-header">
+              <span>Prote&iacute;nas</span>
+              <strong id="progressoProteinasTexto">0.00 / 0.00 g</strong>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <span class="progress-fill progress-protein" id="progressoProteinasBarra"></span>
+            </div>
+            <span class="goal-progress-detail" id="progressoProteinasDetalhe">Meta n&atilde;o definida</span>
+          </article>
+
+          <article class="goal-progress-card">
+            <div class="goal-progress-header">
+              <span>Gorduras</span>
+              <strong id="progressoGordurasTexto">0.00 / 0.00 g</strong>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <span class="progress-fill progress-fat" id="progressoGordurasBarra"></span>
+            </div>
+            <span class="goal-progress-detail" id="progressoGordurasDetalhe">Meta n&atilde;o definida</span>
+          </article>
+
+          <article class="goal-progress-card">
+            <div class="goal-progress-header">
+              <span>Calorias</span>
+              <strong id="progressoCaloriasTexto">0.00 / 0.00 kcal</strong>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <span class="progress-fill progress-calories" id="progressoCaloriasBarra"></span>
+            </div>
+            <span class="goal-progress-detail" id="progressoCaloriasDetalhe">Meta n&atilde;o definida</span>
+          </article>
+        </div>
+      </section>
+
       <section class="meal-summary-grid" id="resumoRefeicoes" aria-label="Resumo por refeicao"></section>
 
       <section class="panel panel-table">

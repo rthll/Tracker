@@ -120,6 +120,79 @@ const View = {
       : "Repetir refei\u00e7\u00f5es anteriores";
   },
 
+  atualizarMetasDiarias(metas) {
+    const campos = [
+      ["metaCarboidratos", metas.carboidratos],
+      ["metaProteinas", metas.proteinas],
+      ["metaGorduras", metas.gorduras],
+      ["metaCalorias", metas.calorias]
+    ];
+
+    campos.forEach(([id, valor]) => {
+      const input = document.getElementById(id);
+
+      if (document.activeElement !== input) {
+        input.value = valor > 0 ? String(valor) : "";
+      }
+    });
+  },
+
+  atualizarProgressoMetas(totais, metas) {
+    const configuracoes = [
+      {
+        chave: "carboidratos",
+        textoId: "progressoCarboidratosTexto",
+        barraId: "progressoCarboidratosBarra",
+        detalheId: "progressoCarboidratosDetalhe",
+        unidade: "g"
+      },
+      {
+        chave: "proteinas",
+        textoId: "progressoProteinasTexto",
+        barraId: "progressoProteinasBarra",
+        detalheId: "progressoProteinasDetalhe",
+        unidade: "g"
+      },
+      {
+        chave: "gorduras",
+        textoId: "progressoGordurasTexto",
+        barraId: "progressoGordurasBarra",
+        detalheId: "progressoGordurasDetalhe",
+        unidade: "g"
+      },
+      {
+        chave: "calorias",
+        textoId: "progressoCaloriasTexto",
+        barraId: "progressoCaloriasBarra",
+        detalheId: "progressoCaloriasDetalhe",
+        unidade: "kcal"
+      }
+    ];
+
+    configuracoes.forEach((configuracao) => {
+      const consumido = totais[configuracao.chave] || 0;
+      const meta = metas[configuracao.chave] || 0;
+      const percentual = meta > 0 ? (consumido / meta) * 100 : 0;
+      const percentualLimitado = Math.min(percentual, 100);
+      const restante = meta - consumido;
+      const texto = document.getElementById(configuracao.textoId);
+      const barra = document.getElementById(configuracao.barraId);
+      const detalhe = document.getElementById(configuracao.detalheId);
+
+      texto.textContent = `${this.formatarNumero(consumido)} / ${this.formatarNumero(meta)} ${configuracao.unidade}`;
+      barra.style.width = `${percentualLimitado}%`;
+      barra.classList.toggle("progress-over", percentual > 100);
+
+      if (meta <= 0) {
+        detalhe.textContent = "Meta n\u00e3o definida";
+      } else if (restante >= 0) {
+        detalhe.textContent = `Faltam ${this.formatarNumero(restante)} ${configuracao.unidade}`;
+      } else {
+        detalhe.textContent = `Excedeu ${this.formatarNumero(Math.abs(restante))} ${configuracao.unidade}`;
+      }
+    });
+  },
+
   atualizarResumoPorRefeicao(refeicoesPorDia, tiposRefeicao) {
     const container = document.getElementById("resumoRefeicoes");
     container.innerHTML = "";
@@ -179,7 +252,7 @@ const View = {
       row.appendChild(cell);
       tbody.appendChild(row);
       this.atualizarTotais(totais);
-      return;
+      return totais;
     }
 
     tiposRefeicao.forEach((refeicao) => {
@@ -221,6 +294,7 @@ const View = {
     });
 
     this.atualizarTotais(totais);
+    return totais;
   },
 
   criarSelectMover(refeicaoOrigemId, index, tiposRefeicao) {

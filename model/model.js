@@ -4,6 +4,12 @@ const Model = {
   refeicoesPorData: {},
   favoritos: [],
   historicoAlimentos: [],
+  metasDiarias: {
+    carboidratos: 0,
+    proteinas: 0,
+    gorduras: 0,
+    calorias: 0
+  },
   limiteHistorico: 8,
   tiposRefeicao: [
     { id: "cafe", nome: "Caf\u00e9 da manh\u00e3" },
@@ -34,6 +40,7 @@ const Model = {
       this.historicoAlimentos = Array.isArray(dados.historicoAlimentos)
         ? dados.historicoAlimentos
         : [];
+      this.metasDiarias = this.normalizarMetas(dados.metasDiarias);
     } catch (error) {
       console.warn("Nao foi possivel carregar os dados locais.", error);
     }
@@ -47,7 +54,8 @@ const Model = {
           alimentos: this.alimentos,
           refeicoesPorData: this.refeicoesPorData,
           favoritos: this.favoritos,
-          historicoAlimentos: this.historicoAlimentos
+          historicoAlimentos: this.historicoAlimentos,
+          metasDiarias: this.metasDiarias
         })
       );
     } catch (error) {
@@ -55,8 +63,27 @@ const Model = {
     }
   },
 
+  normalizarMetas(metas) {
+    return {
+      carboidratos: this.valorNumerico(metas && metas.carboidratos),
+      proteinas: this.valorNumerico(metas && metas.proteinas),
+      gorduras: this.valorNumerico(metas && metas.gorduras),
+      calorias: this.valorNumerico(metas && metas.calorias)
+    };
+  },
+
   getTiposRefeicao() {
     return this.tiposRefeicao.map((refeicao) => ({ ...refeicao }));
+  },
+
+  getMetasDiarias() {
+    return { ...this.metasDiarias };
+  },
+
+  atualizarMetasDiarias(metas) {
+    this.metasDiarias = this.normalizarMetas(metas);
+    this.salvar();
+    return this.getMetasDiarias();
   },
 
   isTipoRefeicaoValido(refeicaoId) {

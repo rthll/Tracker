@@ -22,6 +22,9 @@ const Controller = {
     document.getElementById("btnRepetirRefeicao").addEventListener("click", () => {
       this.repetirRefeicaoAnterior();
     });
+    document.getElementById("btnSalvarMetas").addEventListener("click", () => {
+      this.salvarMetasDiarias();
+    });
     inputData.addEventListener("change", () => {
       this.atualizarView();
     });
@@ -65,6 +68,20 @@ const Controller = {
 
   getRefeicaoSelecionada() {
     return document.getElementById("tipoRefeicao").value || Model.refeicaoPadrao;
+  },
+
+  getMetasDigitadas() {
+    const lerMeta = (id) => {
+      const valor = document.getElementById(id).value.trim();
+      return valor ? Number.parseFloat(valor) : 0;
+    };
+
+    return {
+      carboidratos: lerMeta("metaCarboidratos"),
+      proteinas: lerMeta("metaProteinas"),
+      gorduras: lerMeta("metaGorduras"),
+      calorias: lerMeta("metaCalorias")
+    };
   },
 
   formatarDataExibicao(data) {
@@ -191,6 +208,19 @@ const Controller = {
     this.atualizarView();
   },
 
+  salvarMetasDiarias() {
+    const metas = this.getMetasDigitadas();
+    const valores = Object.values(metas);
+
+    if (valores.some((valor) => Number.isNaN(valor) || valor < 0)) {
+      alert("Informe metas maiores ou iguais a zero.");
+      return;
+    }
+
+    Model.atualizarMetasDiarias(metas);
+    this.atualizarView();
+  },
+
   repetirRefeicaoAnterior() {
     const dataAtual = this.getDataAtual();
     const dataAnterior = this.obterDataAnterior(dataAtual);
@@ -234,8 +264,10 @@ const Controller = {
     View.atualizarAtalhosAlimentos(Model.getFavoritos(), Model.getHistoricoAlimentos());
     View.atualizarAlimentosPersonalizados(Model.getAlimentos());
     View.atualizarBotaoRepetir(Model.getQuantidadeItensDia(dataAnterior));
+    View.atualizarMetasDiarias(Model.getMetasDiarias());
     View.atualizarResumoPorRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());
-    View.atualizarTabelaRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());
+    const totaisDoDia = View.atualizarTabelaRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());
+    View.atualizarProgressoMetas(totaisDoDia, Model.getMetasDiarias());
     this.sincronizarAlimentoSelecionado();
   }
 };

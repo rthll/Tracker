@@ -14,6 +14,8 @@ O projeto foi estruturado com uma abordagem simples em MVC, mantendo responsabil
 - Historico de alimentos adicionados recentemente.
 - Registro separado por refeicao: cafe da manha, almoco, jantar e lanches.
 - Totais por refeicao e totais consolidados do dia.
+- Metas diarias de carboidratos, proteinas, gorduras e calorias.
+- Barras de progresso visual para comparar consumo e meta.
 - Movimentacao de alimentos entre refeicoes.
 - Botao para repetir as refeicoes do dia anterior.
 - Persistencia local com `localStorage`.
@@ -49,6 +51,7 @@ Responsavel por armazenar:
 
 - A lista de alimentos cadastrados.
 - As refeicoes agrupadas por data e tipo de refeicao.
+- As metas diarias de macronutrientes e calorias.
 - Favoritos e historico de alimentos.
 - As operacoes de adicao, consulta, repeticao, movimentacao e remocao dos dados.
 - A sincronizacao dos dados com `localStorage`.
@@ -62,6 +65,7 @@ Responsavel por:
 - Atualizar o autocomplete de alimentos disponiveis.
 - Renderizar favoritos, historico e alimentos personalizados.
 - Renderizar os totais por refeicao.
+- Renderizar as barras de progresso das metas diarias.
 - Renderizar a tabela das refeicoes diarias.
 - Exibir os totais nutricionais da interface.
 - Refletir estados de vazio e feedback visual da pagina.
@@ -76,6 +80,7 @@ Responsavel por:
 - Capturar eventos da interface.
 - Validar os dados informados pelo usuario.
 - Calcular os valores proporcionais da refeicao.
+- Salvar e aplicar as metas diarias.
 - Orquestrar busca, selecao, favoritos, historico, movimentacao e repeticao entre `Model` e `View`.
 
 ## Como executar
@@ -90,8 +95,9 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 4. Escolha a refeicao: cafe da manha, almoco, jantar ou lanches.
 5. Informe a quantidade consumida em gramas.
 6. Adicione o item a refeicao e acompanhe os totais por refeicao e do dia.
-7. Use o controle de mover na tabela para reorganizar itens entre refeicoes.
-8. Use o botao de repeticao para copiar as refeicoes do dia anterior quando fizer sentido.
+7. Configure as metas diarias para comparar consumo e objetivo.
+8. Use o controle de mover na tabela para reorganizar itens entre refeicoes.
+9. Use o botao de repeticao para copiar as refeicoes do dia anterior quando fizer sentido.
 
 ## Melhorias aplicadas nesta versao
 
@@ -100,9 +106,11 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 - Favoritos e historico de alimentos recentes.
 - Registro separado por refeicoes.
 - Totais por refeicao.
+- Metas diarias de calorias e macronutrientes.
+- Barras de progresso visual para cada macro e calorias.
 - Movimentacao de itens entre refeicoes.
 - Repeticao das refeicoes anteriores.
-- Persistencia local de alimentos, refeicoes, favoritos e historico.
+- Persistencia local de alimentos, refeicoes, metas, favoritos e historico.
 - Atualizacao visual da pagina com layout mais moderno e responsivo.
 - Correcao da inicializacao da data para respeitar o horario local.
 - Ajuste da organizacao do MVC, removendo duplicacao indevida da camada de visualizacao.
@@ -118,5 +126,5 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 ## Proximos passos sugeridos
 
 - Adicionar edicao de alimentos ja cadastrados.
-- Incluir metas diarias de macronutrientes para comparacao visual.
 - Criar receitas com porcoes.
+- Criar relatorios semanais de aderencia as metas.
