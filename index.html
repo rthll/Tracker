@@ -24,8 +24,8 @@
           <span class="eyebrow">Tracker nutricional</span>
           <h1>Controle de macronutrientes com uma interface clara e objetiva.</h1>
           <p class="hero-text">
-            Cadastre alimentos, monte a refeição do dia e acompanhe carboidratos,
-            proteínas, gorduras e calorias sem perder a simplicidade do fluxo.
+            Cadastre alimentos personalizados, monte a refei&ccedil;&atilde;o do dia e acompanhe carboidratos,
+            prote&iacute;nas, gorduras e calorias sem perder a simplicidade do fluxo.
           </p>
         </div>
 
@@ -44,7 +44,7 @@
               <span class="panel-kicker">Cadastro</span>
               <h2>Cadastrar alimento</h2>
             </div>
-            <p>Informe os valores por 100g para usar o alimento nos registros diários.</p>
+            <p>Informe os valores por 100g para usar o alimento nos registros di&aacute;rios.</p>
           </div>
 
           <div class="form-grid">
@@ -59,7 +59,7 @@
             </div>
 
             <div class="field-group span-6 span-md-3">
-              <label for="proteinas" class="form-label">Proteínas</label>
+              <label for="proteinas" class="form-label">Prote&iacute;nas</label>
               <input type="number" id="proteinas" class="form-control" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
             </div>
 
@@ -76,6 +76,14 @@
             <div class="field-group span-12">
               <button class="btn btn-primary w-100" id="btnCadastrar" type="button">Cadastrar alimento</button>
             </div>
+
+            <div class="field-group span-12 quick-block">
+              <div class="quick-block-heading">
+                <h3>Alimentos personalizados</h3>
+                <span><strong id="contadorAlimentos">0</strong> cadastrados</span>
+              </div>
+              <div class="chip-list" id="listaPersonalizados"></div>
+            </div>
           </div>
         </article>
 
@@ -83,15 +91,20 @@
           <div class="panel-heading">
             <div>
               <span class="panel-kicker">Registro</span>
-              <h2>Adicionar à refeição</h2>
+              <h2>Adicionar &agrave; refei&ccedil;&atilde;o</h2>
             </div>
             <p>Selecione um alimento cadastrado e registre a quantidade consumida em gramas.</p>
           </div>
 
           <div class="form-grid">
             <div class="field-group span-12">
-              <label for="listaAlimentos" class="form-label">Alimento</label>
-              <select id="listaAlimentos" class="form-select"></select>
+              <label for="buscaAlimento" class="form-label">Buscar alimento</label>
+              <div class="food-search-row">
+                <input type="text" id="buscaAlimento" class="form-control" list="sugestoesAlimentos" autocomplete="off" placeholder="Digite para buscar um alimento">
+                <button class="favorite-toggle" id="btnFavoritar" type="button" aria-label="Favoritar alimento selecionado" title="Favoritar alimento">&#9734;</button>
+              </div>
+              <datalist id="sugestoesAlimentos"></datalist>
+              <p class="field-hint" id="detalheAlimentoSelecionado">Selecione um alimento cadastrado para adicionar &agrave; refei&ccedil;&atilde;o.</p>
             </div>
 
             <div class="field-group span-12 span-md-6">
@@ -100,7 +113,23 @@
             </div>
 
             <div class="field-group span-12 span-md-6 align-end">
-              <button class="btn btn-accent w-100" id="btnAdicionar" type="button">Adicionar à refeição</button>
+              <button class="btn btn-accent w-100" id="btnAdicionar" type="button">Adicionar &agrave; refei&ccedil;&atilde;o</button>
+            </div>
+
+            <div class="field-group span-12 shortcuts-grid">
+              <div class="quick-block">
+                <div class="quick-block-heading">
+                  <h3>Favoritos</h3>
+                </div>
+                <div class="chip-list" id="listaFavoritos"></div>
+              </div>
+
+              <div class="quick-block">
+                <div class="quick-block-heading">
+                  <h3>Recentes</h3>
+                </div>
+                <div class="chip-list" id="listaHistorico"></div>
+              </div>
             </div>
           </div>
         </article>
@@ -113,7 +142,7 @@
         </article>
 
         <article class="summary-card">
-          <span class="summary-label">Proteínas</span>
+          <span class="summary-label">Prote&iacute;nas</span>
           <div class="summary-value"><span id="totalProteinaResumo">0.00</span><small>g</small></div>
         </article>
 
@@ -132,9 +161,10 @@
         <div class="panel-heading panel-heading-table">
           <div>
             <span class="panel-kicker">Acompanhamento</span>
-            <h2 id="tituloRefeicao">Refeição do dia</h2>
+            <h2 id="tituloRefeicao">Refei&ccedil;&atilde;o do dia</h2>
           </div>
-          <p>Visão consolidada dos alimentos adicionados e seus totais nutricionais.</p>
+          <p>Vis&atilde;o consolidada dos alimentos adicionados e seus totais nutricionais.</p>
+          <button class="btn btn-outline-secondary btn-compact" id="btnRepetirRefeicao" type="button">Repetir refei&ccedil;&atilde;o anterior</button>
         </div>
 
         <div class="table-responsive">
@@ -147,7 +177,7 @@
                 <th>Prot</th>
                 <th>Gord</th>
                 <th>Cal</th>
-                <th class="text-center">Ação</th>
+                <th class="text-center">A&ccedil;&atilde;o</th>
               </tr>
             </thead>
             <tbody id="tabelaRefeicao"></tbody>

@@ -1,43 +1,104 @@
 const View = {
   atualizarCabecalhos(dataFormatada) {
     document.getElementById("resumoData").textContent = dataFormatada;
-    document.getElementById("tituloRefeicao").textContent = `Refeição de ${dataFormatada}`;
+    document.getElementById("tituloRefeicao").textContent = `Refei\u00e7\u00e3o de ${dataFormatada}`;
   },
 
-  atualizarListaAlimentos(alimentos) {
-    const lista = document.getElementById("listaAlimentos");
+  atualizarAutocompleteAlimentos(alimentos) {
+    const campoBusca = document.getElementById("buscaAlimento");
+    const quantidade = document.getElementById("quantidade");
+    const sugestoes = document.getElementById("sugestoesAlimentos");
+
+    sugestoes.innerHTML = "";
+
+    alimentos.forEach((alimento) => {
+      const option = document.createElement("option");
+      option.value = alimento.nome;
+      option.label = `${this.formatarNumero(alimento.calorias)} kcal | C ${this.formatarNumero(alimento.carboidratos)}g, P ${this.formatarNumero(alimento.proteinas)}g, G ${this.formatarNumero(alimento.gorduras)}g`;
+      sugestoes.appendChild(option);
+    });
+
+    campoBusca.disabled = !alimentos.length;
+    quantidade.disabled = !alimentos.length;
+    campoBusca.placeholder = alimentos.length
+      ? "Digite para buscar um alimento"
+      : "Cadastre um alimento primeiro";
+  },
+
+  atualizarEstadoAlimentoSelecionado(alimento, favorito) {
+    const detalhe = document.getElementById("detalheAlimentoSelecionado");
+    const botaoFavoritar = document.getElementById("btnFavoritar");
     const botaoAdicionar = document.getElementById("btnAdicionar");
 
-    lista.innerHTML = "";
-
-    if (!alimentos.length) {
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "Cadastre um alimento primeiro";
-      placeholder.selected = true;
-      placeholder.disabled = true;
-      lista.appendChild(placeholder);
-      lista.disabled = true;
+    if (!alimento) {
+      detalhe.textContent = "Selecione um alimento cadastrado para adicionar a refei\u00e7\u00e3o.";
+      botaoFavoritar.disabled = true;
+      botaoFavoritar.textContent = "\u2606";
+      botaoFavoritar.setAttribute("aria-label", "Favoritar alimento selecionado");
       botaoAdicionar.disabled = true;
       return;
     }
 
-    const placeholder = document.createElement("option");
-    placeholder.value = "";
-    placeholder.textContent = "Selecione um alimento";
-    placeholder.selected = true;
-    placeholder.disabled = true;
-    lista.appendChild(placeholder);
-
-    alimentos.forEach((alimento, index) => {
-      const option = document.createElement("option");
-      option.value = String(index);
-      option.textContent = alimento.nome;
-      lista.appendChild(option);
-    });
-
-    lista.disabled = false;
+    detalhe.textContent = `${this.formatarNumero(alimento.calorias)} kcal por 100g | ${this.formatarNumero(alimento.carboidratos)}g carbs, ${this.formatarNumero(alimento.proteinas)}g prot, ${this.formatarNumero(alimento.gorduras)}g gord`;
+    botaoFavoritar.disabled = false;
+    botaoFavoritar.textContent = favorito ? "\u2605" : "\u2606";
+    botaoFavoritar.setAttribute(
+      "aria-label",
+      favorito ? `Remover ${alimento.nome} dos favoritos` : `Adicionar ${alimento.nome} aos favoritos`
+    );
     botaoAdicionar.disabled = false;
+  },
+
+  atualizarAtalhosAlimentos(favoritos, historico) {
+    this.renderizarListaChips("listaFavoritos", favoritos, "Nenhum favorito ainda.");
+    this.renderizarListaChips("listaHistorico", historico, "Sem historico de uso.");
+  },
+
+  atualizarAlimentosPersonalizados(alimentos) {
+    document.getElementById("contadorAlimentos").textContent = String(alimentos.length);
+    this.renderizarListaChips("listaPersonalizados", alimentos, "Nenhum alimento personalizado cadastrado.");
+  },
+
+  renderizarListaChips(containerId, alimentos, mensagemVazia) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+
+    if (!alimentos.length) {
+      const vazio = document.createElement("span");
+      vazio.className = "chip-empty";
+      vazio.textContent = mensagemVazia;
+      container.appendChild(vazio);
+      return;
+    }
+
+    alimentos.forEach((alimento) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "food-chip";
+      button.addEventListener("click", () => {
+        Controller.selecionarAlimento(alimento.id);
+      });
+
+      const nome = document.createElement("span");
+      nome.className = "food-chip-name";
+      nome.textContent = alimento.nome;
+
+      const macros = document.createElement("span");
+      macros.className = "food-chip-macros";
+      macros.textContent = `${this.formatarNumero(alimento.calorias)} kcal/100g`;
+
+      button.appendChild(nome);
+      button.appendChild(macros);
+      container.appendChild(button);
+    });
+  },
+
+  atualizarBotaoRepetir(quantidadeItensOntem) {
+    const botao = document.getElementById("btnRepetirRefeicao");
+    botao.disabled = quantidadeItensOntem <= 0;
+    botao.textContent = quantidadeItensOntem > 0
+      ? `Repetir refei\u00e7\u00e3o anterior (${quantidadeItensOntem})`
+      : "Repetir refei\u00e7\u00e3o anterior";
   },
 
   atualizarTabelaRefeicao(refeicao) {
@@ -93,7 +154,7 @@ const View = {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "remover";
-      button.textContent = "×";
+      button.textContent = "x";
       button.setAttribute("aria-label", `Remover ${item.nome}`);
       button.addEventListener("click", () => {
         Controller.removerItem(index);

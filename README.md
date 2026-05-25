@@ -1,19 +1,24 @@
 # Tracker de Macronutrientes
 
-Aplicação web estática para cadastro de alimentos e montagem de refeições diárias com acompanhamento de carboidratos, proteínas, gorduras e calorias.
+Aplicacao web estatica para cadastro de alimentos e montagem de refeicoes diarias com acompanhamento de carboidratos, proteinas, gorduras e calorias.
 
-## Visão geral
+## Visao geral
 
-O projeto foi estruturado com uma abordagem simples em MVC, mantendo responsabilidades separadas entre interface, controle de eventos e dados em memória. A proposta é oferecer um fluxo direto para registrar alimentos, adicionar quantidades consumidas e visualizar os totais nutricionais por data.
+O projeto foi estruturado com uma abordagem simples em MVC, mantendo responsabilidades separadas entre interface, controle de eventos e dados locais. A proposta e oferecer um fluxo direto para registrar alimentos, adicionar quantidades consumidas e visualizar os totais nutricionais por data.
 
 ## Funcionalidades
 
-- Cadastro de alimentos com macros e calorias por 100g.
-- Seleção de uma data para organizar as refeições do dia.
-- Cálculo proporcional dos nutrientes conforme a quantidade informada.
-- Tabela consolidada com totais de carboidratos, proteínas, gorduras e calorias.
-- Remoção de itens da refeição atual.
-- Interface responsiva com foco em legibilidade e uso rápido.
+- Cadastro de alimentos personalizados com macros e calorias por 100g.
+- Autocomplete para buscar alimentos ao digitar.
+- Favoritos para alimentos usados com frequencia.
+- Historico de alimentos adicionados recentemente.
+- Botao para repetir a refeicao do dia anterior.
+- Persistencia local com `localStorage`.
+- Selecao de uma data para organizar as refeicoes do dia.
+- Calculo proporcional dos nutrientes conforme a quantidade informada.
+- Tabela consolidada com totais de carboidratos, proteinas, gorduras e calorias.
+- Remocao de itens da refeicao atual.
+- Interface responsiva com foco em legibilidade e uso rapido.
 
 ## Estrutura do projeto
 
@@ -37,63 +42,72 @@ Tracker/
 
 Arquivo: `model/model.js`
 
-Responsável por armazenar:
+Responsavel por armazenar:
 
 - A lista de alimentos cadastrados.
-- As refeições agrupadas por data.
-- As operações de adição, consulta e remoção dos dados.
+- As refeicoes agrupadas por data.
+- Favoritos e historico de alimentos.
+- As operacoes de adicao, consulta, repeticao e remocao dos dados.
+- A sincronizacao dos dados com `localStorage`.
 
 ### View
 
 Arquivo: `view/view.js`
 
-Responsável por:
+Responsavel por:
 
-- Atualizar a lista de alimentos disponíveis.
-- Renderizar a tabela da refeição diária.
+- Atualizar o autocomplete de alimentos disponiveis.
+- Renderizar favoritos, historico e alimentos personalizados.
+- Renderizar a tabela da refeicao diaria.
 - Exibir os totais nutricionais da interface.
-- Refletir estados de vazio e feedback visual da página.
+- Refletir estados de vazio e feedback visual da pagina.
 
 ### Controller
 
 Arquivo: `controller/controller.js`
 
-Responsável por:
+Responsavel por:
 
-- Inicializar a aplicação.
+- Inicializar a aplicacao.
 - Capturar eventos da interface.
-- Validar os dados informados pelo usuário.
-- Calcular os valores proporcionais da refeição.
-- Orquestrar a comunicação entre `Model` e `View`.
+- Validar os dados informados pelo usuario.
+- Calcular os valores proporcionais da refeicao.
+- Orquestrar busca, selecao, favoritos, historico e repeticao entre `Model` e `View`.
 
 ## Como executar
 
-Como se trata de um projeto estático, basta abrir o arquivo `index.html` em um navegador moderno.
+Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um navegador moderno.
 
 ## Fluxo de uso
 
 1. Selecione a data desejada.
 2. Cadastre um alimento informando os nutrientes por 100g.
-3. Escolha um alimento cadastrado.
+3. Busque um alimento pelo autocomplete, favoritos ou historico.
 4. Informe a quantidade consumida em gramas.
-5. Adicione o item à refeição e acompanhe os totais do dia.
+5. Adicione o item a refeicao e acompanhe os totais do dia.
+6. Use o botao de repeticao para copiar a refeicao do dia anterior quando fizer sentido.
 
-## Melhorias aplicadas nesta versão
+## Melhorias aplicadas nesta versao
 
-- Atualização visual da página com layout mais moderno e responsivo.
-- Correção da inicialização da data para respeitar o horário local.
-- Ajuste da organização do MVC, removendo duplicação indevida da camada de visualização.
-- Correção de problemas estruturais no HTML.
-- Renderização mais segura da tabela, evitando inserção direta de HTML com dados do usuário.
-- Estados vazios e desabilitação de ações quando não há alimentos cadastrados.
+- Autocomplete de alimentos no fluxo de registro.
+- Cadastro persistente de alimentos personalizados.
+- Favoritos e historico de alimentos recentes.
+- Repeticao da refeicao anterior.
+- Persistencia local de alimentos, refeicoes, favoritos e historico.
+- Atualizacao visual da pagina com layout mais moderno e responsivo.
+- Correcao da inicializacao da data para respeitar o horario local.
+- Ajuste da organizacao do MVC, removendo duplicacao indevida da camada de visualizacao.
+- Correcao de problemas estruturais no HTML.
+- Renderizacao mais segura da tabela, evitando insercao direta de HTML com dados do usuario.
+- Estados vazios e desabilitacao de acoes quando nao ha alimentos cadastrados.
 
-## Limitações atuais
+## Limitacoes atuais
 
-- Os dados são mantidos apenas em memória enquanto a página estiver aberta.
-- Não há integração com backend, autenticação ou persistência local.
+- Os dados ficam salvos no navegador atual via `localStorage`.
+- Nao ha integracao com backend, autenticacao ou sincronizacao entre dispositivos.
 
-## Próximos passos sugeridos
+## Proximos passos sugeridos
 
-- Persistir os dados com `localStorage`.
-- Adicionar edição de alimentos já cadastrados.
-- Incluir metas diárias de macronutrientes para comparação visual.
+- Adicionar edicao de alimentos ja cadastrados.
+- Incluir metas diarias de macronutrientes para comparacao visual.
+- Criar receitas com porcoes.
