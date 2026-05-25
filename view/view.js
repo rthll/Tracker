@@ -137,6 +137,40 @@ const View = {
     });
   },
 
+  atualizarCalculadoraTmb(perfil) {
+    const campos = [
+      ["tmbPeso", perfil.peso],
+      ["tmbAltura", perfil.altura],
+      ["tmbIdade", perfil.idade]
+    ];
+    const sexo = document.getElementById("tmbSexo");
+    const resultado = document.getElementById("tmbResultado");
+    const detalhe = document.getElementById("tmbDetalhe");
+    const botaoUsarMeta = document.getElementById("btnUsarTmbMeta");
+
+    if (document.activeElement !== sexo) {
+      sexo.value = perfil.sexo || "";
+    }
+
+    campos.forEach(([id, valor]) => {
+      const input = document.getElementById(id);
+
+      if (document.activeElement !== input) {
+        input.value = valor > 0 ? String(valor) : "";
+      }
+    });
+
+    resultado.textContent = this.formatarNumero(perfil.resultado);
+    botaoUsarMeta.disabled = perfil.resultado <= 0;
+
+    if (perfil.resultado <= 0) {
+      detalhe.textContent = "Informe os dados para calcular.";
+      return;
+    }
+
+    detalhe.textContent = `Estimativa de repouso: ${this.formatarNumero(perfil.resultado)} kcal por dia.`;
+  },
+
   atualizarProgressoMetas(totais, metas) {
     const configuracoes = [
       {

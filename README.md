@@ -19,6 +19,8 @@ O projeto foi estruturado com uma abordagem simples em MVC, mantendo responsabil
 - Dashboard do dia com calorias consumidas, calorias restantes e status da meta.
 - Distribuicao percentual entre carboidratos, proteinas e gorduras.
 - Grafico comparativo de meta x consumido para macros e calorias.
+- Calculadora de taxa metabolica basal pela equacao de Mifflin-St Jeor.
+- Aplicacao da TMB estimada como meta diaria de calorias.
 - Movimentacao de alimentos entre refeicoes.
 - Botao para repetir as refeicoes do dia anterior.
 - Persistencia local com `localStorage`.
@@ -55,6 +57,7 @@ Responsavel por armazenar:
 - A lista de alimentos cadastrados.
 - As refeicoes agrupadas por data e tipo de refeicao.
 - As metas diarias de macronutrientes e calorias.
+- O ultimo perfil usado na calculadora de taxa metabolica basal.
 - Favoritos e historico de alimentos.
 - As operacoes de adicao, consulta, repeticao, movimentacao e remocao dos dados.
 - A sincronizacao dos dados com `localStorage`.
@@ -70,6 +73,7 @@ Responsavel por:
 - Renderizar os totais por refeicao.
 - Renderizar as barras de progresso das metas diarias.
 - Renderizar a dashboard do dia, distribuicao percentual e grafico de meta x consumido.
+- Renderizar a calculadora de taxa metabolica basal.
 - Renderizar a tabela das refeicoes diarias.
 - Exibir os totais nutricionais da interface.
 - Refletir estados de vazio e feedback visual da pagina.
@@ -85,6 +89,7 @@ Responsavel por:
 - Validar os dados informados pelo usuario.
 - Calcular os valores proporcionais da refeicao.
 - Salvar e aplicar as metas diarias.
+- Calcular TMB e aplicar o resultado como meta calorica quando solicitado.
 - Orquestrar busca, selecao, favoritos, historico, movimentacao e repeticao entre `Model` e `View`.
 
 ## Como executar
@@ -100,9 +105,10 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 5. Informe a quantidade consumida em gramas.
 6. Adicione o item a refeicao e acompanhe os totais por refeicao e do dia.
 7. Configure as metas diarias para comparar consumo e objetivo.
-8. Acompanhe a dashboard para ver distribuicao percentual e meta x consumido.
-9. Use o controle de mover na tabela para reorganizar itens entre refeicoes.
-10. Use o botao de repeticao para copiar as refeicoes do dia anterior quando fizer sentido.
+8. Use a calculadora TMB para estimar a taxa metabolica basal e aplicar como meta calorica.
+9. Acompanhe a dashboard para ver distribuicao percentual e meta x consumido.
+10. Use o controle de mover na tabela para reorganizar itens entre refeicoes.
+11. Use o botao de repeticao para copiar as refeicoes do dia anterior quando fizer sentido.
 
 ## Melhorias aplicadas nesta versao
 
@@ -114,6 +120,7 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 - Metas diarias de calorias e macronutrientes.
 - Barras de progresso visual para cada macro e calorias.
 - Dashboard organizada com resumo calorico, distribuicao percentual dos macros e grafico de meta x consumido.
+- Calculadora de taxa metabolica basal com persistencia local e atalho para meta calorica.
 - Movimentacao de itens entre refeicoes.
 - Repeticao das refeicoes anteriores.
 - Persistencia local de alimentos, refeicoes, metas, favoritos e historico.

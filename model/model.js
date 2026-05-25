@@ -10,6 +10,13 @@ const Model = {
     gorduras: 0,
     calorias: 0
   },
+  tmbPerfil: {
+    sexo: "",
+    peso: 0,
+    altura: 0,
+    idade: 0,
+    resultado: 0
+  },
   limiteHistorico: 8,
   tiposRefeicao: [
     { id: "cafe", nome: "Caf\u00e9 da manh\u00e3" },
@@ -41,6 +48,7 @@ const Model = {
         ? dados.historicoAlimentos
         : [];
       this.metasDiarias = this.normalizarMetas(dados.metasDiarias);
+      this.tmbPerfil = this.normalizarTmbPerfil(dados.tmbPerfil);
     } catch (error) {
       console.warn("Nao foi possivel carregar os dados locais.", error);
     }
@@ -55,7 +63,8 @@ const Model = {
           refeicoesPorData: this.refeicoesPorData,
           favoritos: this.favoritos,
           historicoAlimentos: this.historicoAlimentos,
-          metasDiarias: this.metasDiarias
+          metasDiarias: this.metasDiarias,
+          tmbPerfil: this.tmbPerfil
         })
       );
     } catch (error) {
@@ -72,6 +81,31 @@ const Model = {
     };
   },
 
+  normalizarTmbPerfil(perfil) {
+    const sexo = perfil && ["masculino", "feminino"].includes(perfil.sexo)
+      ? perfil.sexo
+      : "";
+    const perfilNormalizado = {
+      sexo,
+      peso: this.valorNumerico(perfil && perfil.peso),
+      altura: this.valorNumerico(perfil && perfil.altura),
+      idade: this.valorNumerico(perfil && perfil.idade),
+      resultado: 0
+    };
+
+    perfilNormalizado.resultado = this.calcularTmb(perfilNormalizado);
+    return perfilNormalizado;
+  },
+
+  calcularTmb(perfil) {
+    if (!perfil.sexo || perfil.peso <= 0 || perfil.altura <= 0 || perfil.idade <= 0) {
+      return 0;
+    }
+
+    const ajusteSexo = perfil.sexo === "masculino" ? 5 : -161;
+    return (10 * perfil.peso) + (6.25 * perfil.altura) - (5 * perfil.idade) + ajusteSexo;
+  },
+
   getTiposRefeicao() {
     return this.tiposRefeicao.map((refeicao) => ({ ...refeicao }));
   },
@@ -84,6 +118,16 @@ const Model = {
     this.metasDiarias = this.normalizarMetas(metas);
     this.salvar();
     return this.getMetasDiarias();
+  },
+
+  getTmbPerfil() {
+    return { ...this.tmbPerfil };
+  },
+
+  atualizarTmbPerfil(perfil) {
+    this.tmbPerfil = this.normalizarTmbPerfil(perfil);
+    this.salvar();
+    return this.getTmbPerfil();
   },
 
   isTipoRefeicaoValido(refeicaoId) {

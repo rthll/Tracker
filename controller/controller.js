@@ -25,6 +25,12 @@ const Controller = {
     document.getElementById("btnSalvarMetas").addEventListener("click", () => {
       this.salvarMetasDiarias();
     });
+    document.getElementById("btnCalcularTmb").addEventListener("click", () => {
+      this.calcularTmb();
+    });
+    document.getElementById("btnUsarTmbMeta").addEventListener("click", () => {
+      this.usarTmbComoMetaCalorica();
+    });
     inputData.addEventListener("change", () => {
       this.atualizarView();
     });
@@ -81,6 +87,20 @@ const Controller = {
       proteinas: lerMeta("metaProteinas"),
       gorduras: lerMeta("metaGorduras"),
       calorias: lerMeta("metaCalorias")
+    };
+  },
+
+  getTmbDigitada() {
+    const lerValor = (id) => {
+      const valor = document.getElementById(id).value.trim();
+      return valor ? Number.parseFloat(valor) : 0;
+    };
+
+    return {
+      sexo: document.getElementById("tmbSexo").value,
+      peso: lerValor("tmbPeso"),
+      altura: lerValor("tmbAltura"),
+      idade: lerValor("tmbIdade")
     };
   },
 
@@ -221,6 +241,38 @@ const Controller = {
     this.atualizarView();
   },
 
+  calcularTmb() {
+    const perfil = this.getTmbDigitada();
+
+    if (!perfil.sexo || perfil.peso <= 0 || perfil.altura <= 0 || perfil.idade <= 0) {
+      alert("Informe sexo, peso, altura e idade para calcular a TMB.");
+      return;
+    }
+
+    if ([perfil.peso, perfil.altura, perfil.idade].some(Number.isNaN)) {
+      alert("Informe valores numericos validos para peso, altura e idade.");
+      return;
+    }
+
+    Model.atualizarTmbPerfil(perfil);
+    this.atualizarView();
+  },
+
+  usarTmbComoMetaCalorica() {
+    const perfil = Model.getTmbPerfil();
+
+    if (perfil.resultado <= 0) {
+      alert("Calcule a TMB antes de aplicar como meta.");
+      return;
+    }
+
+    Model.atualizarMetasDiarias({
+      ...Model.getMetasDiarias(),
+      calorias: perfil.resultado
+    });
+    this.atualizarView();
+  },
+
   repetirRefeicaoAnterior() {
     const dataAtual = this.getDataAtual();
     const dataAnterior = this.obterDataAnterior(dataAtual);
@@ -264,6 +316,7 @@ const Controller = {
     View.atualizarAtalhosAlimentos(Model.getFavoritos(), Model.getHistoricoAlimentos());
     View.atualizarAlimentosPersonalizados(Model.getAlimentos());
     View.atualizarBotaoRepetir(Model.getQuantidadeItensDia(dataAnterior));
+    View.atualizarCalculadoraTmb(Model.getTmbPerfil());
     View.atualizarMetasDiarias(Model.getMetasDiarias());
     View.atualizarResumoPorRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());
     const totaisDoDia = View.atualizarTabelaRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());

@@ -205,6 +205,55 @@
         </div>
       </section>
 
+      <section class="bmr-panel" aria-label="Calculadora de taxa metabolica basal">
+        <div class="panel-heading bmr-heading">
+          <div>
+            <span class="panel-kicker">Calculadora</span>
+            <h2>Taxa metab&oacute;lica basal</h2>
+          </div>
+          <span class="bmr-method">Mifflin-St Jeor</span>
+        </div>
+
+        <div class="bmr-grid">
+          <div class="bmr-form">
+            <div class="field-group">
+              <label for="tmbSexo" class="form-label">Sexo</label>
+              <select id="tmbSexo" class="form-select">
+                <option value="">Selecione</option>
+                <option value="masculino">Masculino</option>
+                <option value="feminino">Feminino</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label for="tmbPeso" class="form-label">Peso (kg)</label>
+              <input type="number" id="tmbPeso" class="form-control" placeholder="Ex.: 78" min="1" step="0.01" inputmode="decimal">
+            </div>
+
+            <div class="field-group">
+              <label for="tmbAltura" class="form-label">Altura (cm)</label>
+              <input type="number" id="tmbAltura" class="form-control" placeholder="Ex.: 175" min="1" step="0.1" inputmode="decimal">
+            </div>
+
+            <div class="field-group">
+              <label for="tmbIdade" class="form-label">Idade</label>
+              <input type="number" id="tmbIdade" class="form-control" placeholder="Ex.: 30" min="1" step="1" inputmode="numeric">
+            </div>
+
+            <div class="field-group bmr-actions">
+              <button class="btn btn-primary w-100" id="btnCalcularTmb" type="button">Calcular TMB</button>
+            </div>
+          </div>
+
+          <article class="bmr-result-card">
+            <span class="dashboard-label">TMB estimada</span>
+            <div class="bmr-result-value"><span id="tmbResultado">0.00</span><small>kcal/dia</small></div>
+            <p id="tmbDetalhe">Informe os dados para calcular.</p>
+            <button class="btn btn-outline-secondary btn-compact" id="btnUsarTmbMeta" type="button">Usar como meta de calorias</button>
+          </article>
+        </div>
+      </section>
+
       <section class="goals-panel" aria-label="Metas diarias">
         <div class="panel-heading goals-heading">
           <div>

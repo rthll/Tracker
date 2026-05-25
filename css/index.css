@@ -682,6 +682,94 @@ body {
   text-align: right;
 }
 
+.bmr-panel {
+  margin-bottom: 24px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.bmr-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.bmr-method {
+  padding: 8px 12px;
+  border: 1px solid rgba(29, 107, 87, 0.14);
+  border-radius: 999px;
+  background: #eef4f2;
+  color: var(--primary-dark);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.bmr-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+  gap: 16px;
+}
+
+.bmr-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.bmr-actions {
+  grid-column: span 4;
+}
+
+.bmr-result-card {
+  min-width: 0;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(145deg, rgba(20, 77, 63, 0.95), rgba(29, 107, 87, 0.9)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
+  color: #f7fbf9;
+}
+
+.bmr-result-card .dashboard-label,
+.bmr-result-card p,
+.bmr-result-value small {
+  color: rgba(247, 251, 249, 0.76);
+}
+
+.bmr-result-value {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.bmr-result-value small {
+  padding-bottom: 5px;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.bmr-result-card p {
+  min-height: 42px;
+  margin: 16px 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.bmr-result-card .btn-outline-secondary {
+  width: 100%;
+  color: var(--primary-dark);
+  background: rgba(255, 255, 255, 0.88);
+}
+
 .goals-panel {
   margin-bottom: 24px;
   padding: 24px;
@@ -982,6 +1070,9 @@ body {
   .summary-grid,
   .dashboard-heading,
   .dashboard-grid,
+  .bmr-heading,
+  .bmr-grid,
+  .bmr-form,
   .goals-form,
   .goal-progress-grid,
   .meal-summary-grid {
@@ -1020,6 +1111,10 @@ body {
   .goals-heading,
   .panel-heading-table {
     grid-template-columns: 1fr;
+  }
+
+  .bmr-actions {
+    grid-column: span 1;
   }
 
   .macro-chart-row {
