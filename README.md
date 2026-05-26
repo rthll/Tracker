@@ -136,9 +136,3 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 
 - Os dados ficam salvos no navegador atual via `localStorage`.
 - Nao ha integracao com backend, autenticacao ou sincronizacao entre dispositivos.
-
-## Proximos passos sugeridos
-
-- Adicionar edicao de alimentos ja cadastrados.
-- Criar receitas com porcoes.
-- Criar relatorios semanais de aderencia as metas.
