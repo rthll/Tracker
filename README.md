@@ -6,7 +6,7 @@ Aplicacao web estatica para cadastro de alimentos e montagem de refeicoes diaria
 
 O projeto foi estruturado com uma abordagem simples em MVC, mantendo responsabilidades separadas entre interface, controle de eventos e dados locais. A proposta e oferecer um fluxo direto para registrar alimentos, adicionar quantidades consumidas e visualizar os totais nutricionais por data.
 
-A interface usa navegacao interna por paginas para separar o fluxo diario das configuracoes: Dashboard, Refeicoes, Alimentos, Metas e Calculadora.
+A interface usa navegacao interna por paginas para separar o fluxo diario das configuracoes: Dashboard, Refeicoes, Alimentos, Metas, Relatorios e Calculadora.
 
 ## Funcionalidades
 
@@ -23,6 +23,8 @@ A interface usa navegacao interna por paginas para separar o fluxo diario das co
 - Dashboard do dia com calorias consumidas, calorias restantes e status da meta.
 - Distribuicao percentual entre carboidratos, proteinas e gorduras.
 - Grafico comparativo de meta x consumido para macros e calorias.
+- Relatorios exportaveis em PDF para 1 dia, 7 dias, 30 dias ou dias especificos.
+- Relatorios com macros, refeicoes, consistencia alimentar e aderencia as metas.
 - Calculadora de taxa metabolica basal pela equacao de Mifflin-St Jeor.
 - Aplicacao da TMB estimada como meta diaria de calorias.
 - Movimentacao de alimentos entre refeicoes.
@@ -85,6 +87,7 @@ Responsavel por:
 - Renderizar as barras de progresso das metas diarias.
 - Renderizar a dashboard do dia, distribuicao percentual e grafico de meta x consumido.
 - Renderizar a calculadora de taxa metabolica basal.
+- Renderizar a previa dos relatorios nutricionais.
 - Renderizar a tabela das refeicoes diarias.
 - Exibir os totais nutricionais da interface.
 - Refletir estados de vazio e feedback visual da pagina.
@@ -97,11 +100,12 @@ Responsavel por:
 
 - Inicializar a aplicacao.
 - Capturar eventos da interface.
-- Controlar a navegacao entre Dashboard, Refeicoes, Alimentos, Metas e Calculadora.
+- Controlar a navegacao entre Dashboard, Refeicoes, Alimentos, Metas, Relatorios e Calculadora.
 - Validar os dados informados pelo usuario.
 - Calcular os valores proporcionais da refeicao.
 - Salvar e aplicar as metas diarias.
 - Calcular TMB e aplicar o resultado como meta calorica quando solicitado.
+- Gerar relatorios por periodo e acionar a exportacao em PDF pela impressao do navegador.
 - Orquestrar busca, selecao, favoritos, historico, movimentacao e repeticao entre `Model` e `View`.
 
 ## Base TACO
@@ -135,7 +139,8 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 3. Use Refeicoes para revisar, mover ou remover itens.
 4. Use Alimentos para cadastrar alimentos personalizados.
 5. Use Metas para ajustar calorias e macronutrientes.
-6. Use Calculadora para estimar a TMB e aplicar como meta calorica.
+6. Use Relatorios para gerar PDF de 1 dia, 7 dias, 30 dias ou datas pontuais.
+7. Use Calculadora para estimar a TMB e aplicar como meta calorica.
 
 ## Melhorias aplicadas nesta versao
 
@@ -147,6 +152,7 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 - Metas diarias de calorias e macronutrientes.
 - Barras de progresso visual para cada macro e calorias.
 - Dashboard organizada com resumo calorico, distribuicao percentual dos macros e grafico de meta x consumido.
+- Relatorios nutricionais exportaveis em PDF com metricas de consistencia e macronutrientes.
 - Reorganizacao da interface em paginas especificas por funcao.
 - Importacao da base TACO por script de conversao para uso nativo no autocomplete.
 - Calculadora de taxa metabolica basal com persistencia local e atalho para meta calorica.

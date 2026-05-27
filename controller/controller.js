@@ -1,6 +1,7 @@
 const Controller = {
   alimentoSelecionadoId: null,
   paginaAtual: "dashboard",
+  datasPontuaisRelatorio: [],
 
   init() {
     Model.init();
@@ -10,7 +11,12 @@ const Controller = {
     const inputData = document.getElementById("dataSelecionada");
     const campoBusca = document.getElementById("buscaAlimento");
     const quantidade = document.getElementById("quantidade");
+    const relatorioDataBase = document.getElementById("relatorioDataBase");
+    const relatorioDataPontual = document.getElementById("relatorioDataPontual");
     inputData.value = this.obterDataHojeLocal();
+    relatorioDataBase.value = inputData.value;
+    relatorioDataPontual.value = inputData.value;
+    this.datasPontuaisRelatorio = [inputData.value];
 
     document.getElementById("btnCadastrar").addEventListener("click", () => {
       this.cadastrarAlimento();
@@ -33,7 +39,24 @@ const Controller = {
     document.getElementById("btnUsarTmbMeta").addEventListener("click", () => {
       this.usarTmbComoMetaCalorica();
     });
+    document.getElementById("relatorioPeriodo").addEventListener("change", () => {
+      this.atualizarRelatorio();
+    });
+    relatorioDataBase.addEventListener("change", () => {
+      this.atualizarRelatorio();
+    });
+    document.getElementById("btnAdicionarDataRelatorio").addEventListener("click", () => {
+      this.adicionarDataPontualRelatorio();
+    });
+    document.getElementById("btnGerarRelatorio").addEventListener("click", () => {
+      this.atualizarRelatorio();
+    });
+    document.getElementById("btnExportarRelatorioPdf").addEventListener("click", () => {
+      this.exportarRelatorioPdf();
+    });
     inputData.addEventListener("change", () => {
+      relatorioDataBase.value = inputData.value;
+      relatorioDataPontual.value = inputData.value;
       this.atualizarView();
     });
     campoBusca.addEventListener("input", () => {
@@ -64,12 +87,12 @@ const Controller = {
     const hash = window.location && window.location.hash
       ? window.location.hash.replace("#", "")
       : "";
-    const paginasValidas = ["dashboard", "refeicoes", "alimentos", "metas", "calculadora"];
+    const paginasValidas = ["dashboard", "refeicoes", "alimentos", "metas", "relatorios", "calculadora"];
     return paginasValidas.includes(hash) ? hash : "dashboard";
   },
 
   navegarPara(pagina, atualizarHash = true) {
-    const paginasValidas = ["dashboard", "refeicoes", "alimentos", "metas", "calculadora"];
+    const paginasValidas = ["dashboard", "refeicoes", "alimentos", "metas", "relatorios", "calculadora"];
 
     if (!paginasValidas.includes(pagina)) {
       return;
@@ -102,8 +125,48 @@ const Controller = {
     return `${anoAnterior}-${mesAnterior}-${diaAnterior}`;
   },
 
+  formatarDataLocal(dataLocal) {
+    const ano = dataLocal.getFullYear();
+    const mes = String(dataLocal.getMonth() + 1).padStart(2, "0");
+    const dia = String(dataLocal.getDate()).padStart(2, "0");
+    return `${ano}-${mes}-${dia}`;
+  },
+
+  obterIntervaloDatas(dataFinal, quantidadeDias) {
+    const dataBase = Model.isDataValida(dataFinal) ? dataFinal : this.obterDataHojeLocal();
+    const [ano, mes, dia] = dataBase.split("-").map(Number);
+    const fim = new Date(ano, mes - 1, dia);
+    const datas = [];
+
+    for (let offset = quantidadeDias - 1; offset >= 0; offset -= 1) {
+      const data = new Date(fim);
+      data.setDate(fim.getDate() - offset);
+      datas.push(this.formatarDataLocal(data));
+    }
+
+    return datas;
+  },
+
   getDataAtual() {
     return document.getElementById("dataSelecionada").value || this.obterDataHojeLocal();
+  },
+
+  getPeriodoRelatorio() {
+    return document.getElementById("relatorioPeriodo").value || "1";
+  },
+
+  getDataRelatorioBase() {
+    return document.getElementById("relatorioDataBase").value || this.getDataAtual();
+  },
+
+  getDatasRelatorioSelecionadas() {
+    const periodo = this.getPeriodoRelatorio();
+
+    if (periodo === "custom") {
+      return Model.normalizarDatasRelatorio(this.datasPontuaisRelatorio);
+    }
+
+    return this.obterIntervaloDatas(this.getDataRelatorioBase(), Number.parseInt(periodo, 10) || 1);
   },
 
   getRefeicaoSelecionada() {
@@ -314,6 +377,52 @@ const Controller = {
     this.atualizarView();
   },
 
+  adicionarDataPontualRelatorio() {
+    const input = document.getElementById("relatorioDataPontual");
+    const data = input.value;
+
+    if (!Model.isDataValida(data)) {
+      alert("Selecione uma data v\u00e1lida para o relat\u00f3rio.");
+      return;
+    }
+
+    this.datasPontuaisRelatorio = Model.normalizarDatasRelatorio([
+      ...this.datasPontuaisRelatorio,
+      data
+    ]);
+    document.getElementById("relatorioPeriodo").value = "custom";
+    this.atualizarRelatorio();
+  },
+
+  removerDataPontualRelatorio(data) {
+    this.datasPontuaisRelatorio = this.datasPontuaisRelatorio.filter((dataRelatorio) => dataRelatorio !== data);
+    this.atualizarRelatorio();
+  },
+
+  gerarRelatorioAtual() {
+    return Model.gerarRelatorio(this.getDatasRelatorioSelecionadas());
+  },
+
+  atualizarRelatorio() {
+    const periodo = this.getPeriodoRelatorio();
+    const relatorio = this.gerarRelatorioAtual();
+    View.atualizarRelatorioControles(periodo, this.datasPontuaisRelatorio);
+    View.renderizarRelatorio(relatorio);
+  },
+
+  exportarRelatorioPdf() {
+    const relatorio = this.gerarRelatorioAtual();
+
+    if (!relatorio.totalDias) {
+      alert("Selecione ao menos um dia para exportar o relat\u00f3rio.");
+      return;
+    }
+
+    View.renderizarRelatorio(relatorio);
+    this.navegarPara("relatorios");
+    window.print();
+  },
+
   repetirRefeicaoAnterior() {
     const dataAtual = this.getDataAtual();
     const dataAnterior = this.obterDataAnterior(dataAtual);
@@ -363,6 +472,7 @@ const Controller = {
     const totaisDoDia = View.atualizarTabelaRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());
     View.atualizarDashboard(totaisDoDia, Model.getMetasDiarias());
     View.atualizarProgressoMetas(totaisDoDia, Model.getMetasDiarias());
+    this.atualizarRelatorio();
     this.sincronizarAlimentoSelecionado();
   }
 };

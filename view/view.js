@@ -514,6 +514,269 @@ const View = {
     return button;
   },
 
+  atualizarRelatorioControles(periodo, datasPontuais) {
+    const selectPeriodo = document.getElementById("relatorioPeriodo");
+    const grupoDataBase = document.getElementById("grupoRelatorioDataBase");
+    const grupoDiasPontuais = document.getElementById("grupoRelatorioDiasPontuais");
+    const modoPontual = periodo === "custom";
+
+    if (document.activeElement !== selectPeriodo) {
+      selectPeriodo.value = periodo;
+    }
+
+    grupoDataBase.hidden = modoPontual;
+    grupoDiasPontuais.hidden = !modoPontual;
+    this.renderizarDatasPontuaisRelatorio(datasPontuais);
+  },
+
+  renderizarDatasPontuaisRelatorio(datasPontuais) {
+    const container = document.getElementById("relatorioDatasPontuais");
+    container.innerHTML = "";
+
+    if (!datasPontuais.length) {
+      const vazio = document.createElement("span");
+      vazio.className = "chip-empty";
+      vazio.textContent = "Nenhum dia selecionado.";
+      container.appendChild(vazio);
+      return;
+    }
+
+    datasPontuais.forEach((data) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "date-chip";
+      chip.textContent = this.formatarDataCurta(data);
+      chip.setAttribute("aria-label", `Remover ${this.formatarDataCurta(data)} do relat\u00f3rio`);
+      chip.addEventListener("click", () => {
+        Controller.removerDataPontualRelatorio(data);
+      });
+      container.appendChild(chip);
+    });
+  },
+
+  renderizarRelatorio(relatorio) {
+    const container = document.getElementById("relatorioPreview");
+    container.innerHTML = "";
+
+    if (!relatorio || !relatorio.totalDias) {
+      const vazio = this.criarElemento("div", "report-empty");
+      vazio.appendChild(this.criarElemento("span", "panel-kicker", "Relat\u00f3rio"));
+      vazio.appendChild(this.criarElemento("h2", "", "Nenhum per\u00edodo selecionado"));
+      vazio.appendChild(this.criarElemento("p", "", "Selecione ao menos um dia para gerar o relat\u00f3rio."));
+      container.appendChild(vazio);
+      return;
+    }
+
+    const documento = this.criarElemento("div", "report-document");
+    documento.appendChild(this.criarCabecalhoRelatorio(relatorio));
+    documento.appendChild(this.criarResumoExecutivoRelatorio(relatorio));
+    documento.appendChild(this.criarSecaoMacrosRelatorio(relatorio));
+    documento.appendChild(this.criarSecaoRefeicoesRelatorio(relatorio));
+    documento.appendChild(this.criarSecaoDiasRelatorio(relatorio));
+    container.appendChild(documento);
+  },
+
+  criarCabecalhoRelatorio(relatorio) {
+    const header = this.criarElemento("header", "report-header");
+    const titulo = this.criarElemento("div", "report-title-block");
+    const periodo = relatorio.datas.length === 1
+      ? this.formatarDataLonga(relatorio.datas[0])
+      : `${this.formatarDataCurta(relatorio.datas[0])} at\u00e9 ${this.formatarDataCurta(relatorio.datas[relatorio.datas.length - 1])}`;
+
+    titulo.appendChild(this.criarElemento("span", "panel-kicker", "Relat\u00f3rio nutricional"));
+    titulo.appendChild(this.criarElemento("h2", "", "Macronutrientes e refei\u00e7\u00f5es"));
+    titulo.appendChild(this.criarElemento("p", "", `${relatorio.totalDias} ${relatorio.totalDias === 1 ? "dia analisado" : "dias analisados"} | ${periodo}`));
+
+    const meta = this.criarElemento("div", "report-generated");
+    meta.appendChild(this.criarElemento("span", "", "Gerado em"));
+    meta.appendChild(this.criarElemento("strong", "", this.formatarDataHora(relatorio.geradoEm)));
+
+    header.appendChild(titulo);
+    header.appendChild(meta);
+    return header;
+  },
+
+  criarResumoExecutivoRelatorio(relatorio) {
+    const section = this.criarElemento("section", "report-section");
+    const metricas = relatorio.metricasConsistencia;
+    const cards = this.criarElemento("div", "report-metric-grid");
+
+    section.appendChild(this.criarTituloSecaoRelatorio("Resumo", "Consist\u00eancia alimentar e volume registrado."));
+    cards.appendChild(this.criarCardRelatorio("Dias com registro", `${metricas.diasComRegistro}/${relatorio.totalDias}`, `${this.formatarPercentual(metricas.percentualDiasComRegistro)} do per\u00edodo`));
+    cards.appendChild(this.criarCardRelatorio("Refei\u00e7\u00f5es registradas", `${metricas.refeicoesRegistradas}/${metricas.refeicoesPossiveis}`, `${this.formatarNumero(metricas.mediaRefeicoesPorDia)} por dia`));
+    cards.appendChild(this.criarCardRelatorio("Ader\u00eancia m\u00e9dia", this.formatarPercentual(metricas.aderenciaMediaMacros), "M\u00e9dia das metas definidas"));
+    cards.appendChild(this.criarCardRelatorio("Meta cal\u00f3rica", metricas.metaCaloricaDefinida ? `${metricas.diasDentroMetaCalorica}/${relatorio.totalDias}` : "Sem meta", metricas.metaCaloricaDefinida ? `${this.formatarPercentual(metricas.percentualDiasDentroMetaCalorica)} entre 90% e 110%` : "Defina uma meta di\u00e1ria"));
+    cards.appendChild(this.criarCardRelatorio("Total consumido", `${this.formatarNumero(relatorio.totais.calorias)} kcal`, `${relatorio.totalItens} itens registrados`));
+    cards.appendChild(this.criarCardRelatorio("M\u00e9dia di\u00e1ria", `${this.formatarNumero(relatorio.mediaDiaria.calorias)} kcal`, `C ${this.formatarNumero(relatorio.mediaDiaria.carboidratos)}g | P ${this.formatarNumero(relatorio.mediaDiaria.proteinas)}g | G ${this.formatarNumero(relatorio.mediaDiaria.gorduras)}g`));
+    section.appendChild(cards);
+
+    if (relatorio.diaMaiorCalorias && relatorio.diaMenorCalorias) {
+      const extremos = this.criarElemento("div", "report-extremes");
+      extremos.appendChild(this.criarElemento("span", "", `Maior consumo: ${this.formatarDataCurta(relatorio.diaMaiorCalorias.data)} com ${this.formatarNumero(relatorio.diaMaiorCalorias.totais.calorias)} kcal`));
+      extremos.appendChild(this.criarElemento("span", "", `Menor consumo: ${this.formatarDataCurta(relatorio.diaMenorCalorias.data)} com ${this.formatarNumero(relatorio.diaMenorCalorias.totais.calorias)} kcal`));
+      section.appendChild(extremos);
+    }
+
+    return section;
+  },
+
+  criarSecaoMacrosRelatorio(relatorio) {
+    const section = this.criarElemento("section", "report-section");
+    const distribuicao = this.criarElemento("div", "report-macro-stack");
+    const segmentos = [
+      ["macro-carbs", relatorio.distribuicaoMacros.carboidratos, "Carboidratos"],
+      ["macro-protein", relatorio.distribuicaoMacros.proteinas, "Prote\u00ednas"],
+      ["macro-fat", relatorio.distribuicaoMacros.gorduras, "Gorduras"]
+    ];
+
+    section.appendChild(this.criarTituloSecaoRelatorio("Macronutrientes", "Totais, m\u00e9dias di\u00e1rias e ader\u00eancia \u00e0s metas."));
+
+    segmentos.forEach(([classe, percentual, nome]) => {
+      const segmento = this.criarElemento("span", `report-macro-segment ${classe}`);
+      segmento.style.width = `${percentual}%`;
+      segmento.title = `${nome}: ${this.formatarPercentual(percentual)}`;
+      distribuicao.appendChild(segmento);
+    });
+
+    section.appendChild(distribuicao);
+    section.appendChild(this.criarTabelaRelatorio(
+      ["Macro", "Total", "M\u00e9dia/dia", "Meta/dia", "Diferen\u00e7a/dia", "Ader\u00eancia", "Dias na meta"],
+      relatorio.metricasMacros.map((macro) => [
+        macro.nome,
+        this.formatarComUnidade(macro.consumidoTotal, macro.unidade),
+        this.formatarComUnidade(macro.mediaConsumida, macro.unidade),
+        macro.metaDiaria > 0 ? this.formatarComUnidade(macro.metaDiaria, macro.unidade) : "Sem meta",
+        macro.metaDiaria > 0 ? this.formatarComUnidade(macro.diferencaMedia, macro.unidade) : "Sem meta",
+        macro.metaDiaria > 0 ? this.formatarPercentual(macro.percentualMeta) : "Sem meta",
+        macro.metaDiaria > 0 ? `${macro.diasDentroMeta}/${relatorio.totalDias}` : "Sem meta"
+      ])
+    ));
+
+    return section;
+  },
+
+  criarSecaoRefeicoesRelatorio(relatorio) {
+    const section = this.criarElemento("section", "report-section");
+    section.appendChild(this.criarTituloSecaoRelatorio("Refei\u00e7\u00f5es", "Distribui\u00e7\u00e3o dos registros por refei\u00e7\u00e3o."));
+    section.appendChild(this.criarTabelaRelatorio(
+      ["Refei\u00e7\u00e3o", "Dias com registro", "Itens", "Calorias", "Carbs", "Prote\u00ednas", "Gorduras"],
+      relatorio.refeicoesResumo.map((refeicao) => [
+        refeicao.nome,
+        `${refeicao.diasComRegistro}/${relatorio.totalDias}`,
+        String(refeicao.totalItens),
+        this.formatarComUnidade(refeicao.totais.calorias, "kcal"),
+        this.formatarComUnidade(refeicao.totais.carboidratos, "g"),
+        this.formatarComUnidade(refeicao.totais.proteinas, "g"),
+        this.formatarComUnidade(refeicao.totais.gorduras, "g")
+      ])
+    ));
+    return section;
+  },
+
+  criarSecaoDiasRelatorio(relatorio) {
+    const section = this.criarElemento("section", "report-section report-days-section");
+    const lista = this.criarElemento("div", "report-day-list");
+
+    section.appendChild(this.criarTituloSecaoRelatorio("Detalhamento di\u00e1rio", "Refei\u00e7\u00f5es e alimentos registrados em cada dia."));
+
+    relatorio.dias.forEach((dia) => {
+      const card = this.criarElemento("article", "report-day-card");
+      const header = this.criarElemento("div", "report-day-header");
+      header.appendChild(this.criarElemento("h3", "", this.formatarDataLonga(dia.data)));
+      header.appendChild(this.criarElemento("span", "", `${this.formatarNumero(dia.totais.calorias)} kcal | C ${this.formatarNumero(dia.totais.carboidratos)}g | P ${this.formatarNumero(dia.totais.proteinas)}g | G ${this.formatarNumero(dia.totais.gorduras)}g`));
+      card.appendChild(header);
+
+      if (!dia.totalItens) {
+        card.appendChild(this.criarElemento("p", "report-empty-day", "Sem refei\u00e7\u00f5es registradas."));
+      } else {
+        dia.refeicoes
+          .filter((refeicao) => refeicao.totalItens > 0)
+          .forEach((refeicao) => {
+            const grupo = this.criarElemento("div", "report-meal-detail");
+            grupo.appendChild(this.criarElemento("h4", "", `${refeicao.nome} | ${this.formatarNumero(refeicao.totais.calorias)} kcal`));
+            grupo.appendChild(this.criarTabelaRelatorio(
+              ["Alimento", "Qtd", "Carbs", "Prote\u00ednas", "Gorduras", "Calorias"],
+              refeicao.itens.map((item) => [
+                item.nome,
+                this.formatarComUnidade(item.quantidade, "g"),
+                this.formatarComUnidade(item.carboidratos, "g"),
+                this.formatarComUnidade(item.proteinas, "g"),
+                this.formatarComUnidade(item.gorduras, "g"),
+                this.formatarComUnidade(item.calorias, "kcal")
+              ])
+            ));
+            card.appendChild(grupo);
+          });
+      }
+
+      lista.appendChild(card);
+    });
+
+    section.appendChild(lista);
+    return section;
+  },
+
+  criarTituloSecaoRelatorio(titulo, descricao) {
+    const header = this.criarElemento("div", "report-section-heading");
+    header.appendChild(this.criarElemento("h3", "", titulo));
+    header.appendChild(this.criarElemento("p", "", descricao));
+    return header;
+  },
+
+  criarCardRelatorio(rotulo, valor, detalhe) {
+    const card = this.criarElemento("article", "report-metric-card");
+    card.appendChild(this.criarElemento("span", "", rotulo));
+    card.appendChild(this.criarElemento("strong", "", valor));
+    card.appendChild(this.criarElemento("small", "", detalhe));
+    return card;
+  },
+
+  criarTabelaRelatorio(colunas, linhas) {
+    const wrapper = this.criarElemento("div", "report-table-wrapper");
+    const table = document.createElement("table");
+    table.className = "report-table";
+    const thead = document.createElement("thead");
+    const tbody = document.createElement("tbody");
+    const headerRow = document.createElement("tr");
+
+    colunas.forEach((coluna) => {
+      const th = document.createElement("th");
+      th.textContent = coluna;
+      headerRow.appendChild(th);
+    });
+
+    thead.appendChild(headerRow);
+
+    linhas.forEach((linha) => {
+      const row = document.createElement("tr");
+      linha.forEach((valor) => {
+        const cell = document.createElement("td");
+        cell.textContent = valor;
+        row.appendChild(cell);
+      });
+      tbody.appendChild(row);
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    return wrapper;
+  },
+
+  criarElemento(tag, className = "", texto = "") {
+    const elemento = document.createElement(tag);
+
+    if (className) {
+      elemento.className = className;
+    }
+
+    if (texto !== "") {
+      elemento.textContent = texto;
+    }
+
+    return elemento;
+  },
+
   calcularTotais(itens) {
     return itens.reduce((totais, item) => {
       totais.carboidratos += item.carboidratos;
@@ -548,5 +811,38 @@ const View = {
 
   formatarNumero(valor) {
     return Number(valor).toFixed(2);
+  },
+
+  formatarPercentual(valor) {
+    return `${this.formatarNumero(valor)}%`;
+  },
+
+  formatarComUnidade(valor, unidade) {
+    return `${this.formatarNumero(valor)} ${unidade}`;
+  },
+
+  formatarDataCurta(data) {
+    const [ano, mes, dia] = data.split("-").map(Number);
+    return new Intl.DateTimeFormat("pt-BR").format(new Date(ano, mes - 1, dia));
+  },
+
+  formatarDataLonga(data) {
+    const [ano, mes, dia] = data.split("-").map(Number);
+    return new Intl.DateTimeFormat("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    }).format(new Date(ano, mes - 1, dia));
+  },
+
+  formatarDataHora(dataIso) {
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(new Date(dataIso));
   }
 };

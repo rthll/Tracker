@@ -31,6 +31,7 @@
           <button class="app-nav-button" type="button" data-page-target="refeicoes">Refei&ccedil;&otilde;es</button>
           <button class="app-nav-button" type="button" data-page-target="alimentos">Alimentos</button>
           <button class="app-nav-button" type="button" data-page-target="metas">Metas</button>
+          <button class="app-nav-button" type="button" data-page-target="relatorios">Relat&oacute;rios</button>
           <button class="app-nav-button" type="button" data-page-target="calculadora">Calculadora</button>
         </nav>
 
@@ -368,6 +369,60 @@
               <span class="goal-progress-detail" id="progressoCaloriasDetalhe">Meta n&atilde;o definida</span>
             </article>
           </div>
+        </section>
+      </section>
+
+      <section class="page-view" id="page-relatorios" data-page="relatorios" hidden>
+        <div class="page-heading">
+          <div>
+            <span class="panel-kicker">Relat&oacute;rios</span>
+            <h2>Exporta&ccedil;&atilde;o em PDF</h2>
+          </div>
+          <button class="btn btn-primary btn-compact" id="btnExportarRelatorioPdf" type="button">Exportar PDF</button>
+        </div>
+
+        <section class="report-layout">
+          <article class="panel report-controls">
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker">Per&iacute;odo</span>
+                <h2>Configura&ccedil;&atilde;o</h2>
+              </div>
+            </div>
+
+            <div class="report-controls-grid">
+              <div class="field-group">
+                <label for="relatorioPeriodo" class="form-label">Tipo de relat&oacute;rio</label>
+                <select id="relatorioPeriodo" class="form-select">
+                  <option value="1">1 dia</option>
+                  <option value="7">7 dias</option>
+                  <option value="30">30 dias</option>
+                  <option value="custom">Dias espec&iacute;ficos</option>
+                </select>
+              </div>
+
+              <div class="field-group" id="grupoRelatorioDataBase">
+                <label for="relatorioDataBase" class="form-label">Data final</label>
+                <input type="date" id="relatorioDataBase" class="form-control">
+              </div>
+
+              <div class="report-custom-fields" id="grupoRelatorioDiasPontuais" hidden>
+                <div class="field-group">
+                  <label for="relatorioDataPontual" class="form-label">Adicionar dia</label>
+                  <div class="report-date-add">
+                    <input type="date" id="relatorioDataPontual" class="form-control">
+                    <button class="btn btn-outline-secondary btn-compact" id="btnAdicionarDataRelatorio" type="button">Adicionar</button>
+                  </div>
+                </div>
+
+                <div class="selected-date-list" id="relatorioDatasPontuais"></div>
+              </div>
+
+              <button class="btn btn-accent w-100" id="btnGerarRelatorio" type="button">Gerar relat&oacute;rio</button>
+            </div>
+          </article>
+
+          <article class="panel report-print-area" id="relatorioPreview" aria-live="polite"></article>
         </section>
       </section>
 
