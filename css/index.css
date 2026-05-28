@@ -1646,6 +1646,498 @@ body {
   }
 }
 
+/* Mobile-first responsive layer */
+.page-shell {
+  overflow-x: hidden;
+  padding: 12px;
+}
+
+.ambient-shape {
+  display: none;
+}
+
+.app-card {
+  width: 100%;
+  max-width: 1180px;
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.app-topbar {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.brand-block h1 {
+  font-size: 1.85rem;
+}
+
+.eyebrow {
+  margin-bottom: 10px;
+}
+
+.app-nav {
+  grid-column: 1;
+  grid-row: auto;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 6px;
+  border-radius: 16px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.app-nav-button {
+  flex: 0 0 auto;
+  min-width: 104px;
+  min-height: 44px;
+  padding: 0 12px;
+  scroll-snap-align: start;
+}
+
+.date-panel,
+.date-panel-compact,
+.panel,
+.dashboard-panel,
+.goals-panel,
+.bmr-panel,
+.report-print-area {
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.date-panel-compact {
+  grid-column: 1;
+  grid-row: auto;
+}
+
+.date-panel-value,
+.date-panel-compact .date-panel-value {
+  font-size: 1.05rem;
+}
+
+.page-heading,
+.dashboard-heading,
+.bmr-heading,
+.goals-heading,
+.panel-heading-table,
+.report-header {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.page-heading {
+  gap: 10px;
+}
+
+.page-heading h2 {
+  font-size: 1.42rem;
+}
+
+.page-heading p,
+.dashboard-heading p,
+.panel-heading-table p {
+  max-width: none;
+  text-align: left;
+}
+
+.page-heading .btn,
+.goals-heading .btn,
+.panel-heading-table .btn-compact {
+  width: 100%;
+}
+
+.daily-layout,
+.content-grid,
+.single-page-grid,
+.summary-grid,
+.dashboard-grid,
+.bmr-grid,
+.bmr-form,
+.goals-form,
+.goal-progress-grid,
+.meal-summary-grid,
+.report-layout,
+.report-metric-grid,
+.report-extremes,
+.report-date-add {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.quick-add-panel,
+.report-controls {
+  position: static;
+}
+
+.shortcuts-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.span-6,
+.span-md-6,
+.span-md-3 {
+  grid-column: span 12;
+}
+
+.form-grid {
+  gap: 14px;
+}
+
+.form-control,
+.form-select,
+.btn,
+.favorite-toggle {
+  min-height: 48px;
+}
+
+.food-search-row {
+  grid-template-columns: minmax(0, 1fr) 48px;
+}
+
+.favorite-toggle {
+  width: 48px;
+}
+
+.food-library {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.food-chip {
+  width: 100%;
+}
+
+.summary-grid {
+  gap: 10px;
+}
+
+.summary-card,
+.dashboard-metric,
+.dashboard-chart-panel,
+.goal-progress-card,
+.meal-summary-card,
+.report-metric-card,
+.report-day-card {
+  padding: 14px;
+}
+
+.summary-value {
+  font-size: 1.65rem;
+}
+
+.dashboard-main-value,
+.bmr-result-value {
+  font-size: 1.9rem;
+}
+
+.dashboard-meta-row,
+.dashboard-chart-heading,
+.report-day-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.macro-chart-row {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.macro-chart-percent {
+  text-align: left;
+}
+
+.bmr-actions {
+  grid-column: span 1;
+}
+
+.report-title-block h2 {
+  font-size: 1.45rem;
+}
+
+.report-generated {
+  min-width: 0;
+}
+
+.table-responsive,
+.report-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  min-width: 760px;
+}
+
+.report-table {
+  min-width: 720px;
+}
+
+.table thead th,
+.table tbody td,
+.table tfoot th,
+.table tfoot td,
+.report-table th,
+.report-table td {
+  padding: 12px 10px;
+  font-size: 0.84rem;
+}
+
+.actions-cell {
+  min-width: 160px;
+}
+
+.btn-compact {
+  width: 100%;
+}
+
+@media (min-width: 576px) {
+  .page-shell {
+    padding: 20px;
+  }
+
+  .app-card {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .summary-grid,
+  .goal-progress-grid,
+  .meal-summary-grid,
+  .report-metric-grid,
+  .report-extremes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .shortcuts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .food-chip {
+    width: auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .page-shell {
+    padding: 28px 20px 52px;
+  }
+
+  .app-card {
+    padding: 26px;
+    border-radius: var(--radius-xl);
+  }
+
+  .brand-block h1 {
+    font-size: 2.25rem;
+  }
+
+  .page-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .page-heading p {
+    max-width: 42ch;
+    text-align: right;
+  }
+
+  .page-heading .btn,
+  .goals-heading .btn,
+  .panel-heading-table .btn-compact,
+  .btn-compact {
+    width: auto;
+  }
+
+  .content-grid,
+  .goals-form,
+  .bmr-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .span-6,
+  .span-md-6 {
+    grid-column: span 6;
+  }
+
+  .span-md-3 {
+    grid-column: span 3;
+  }
+
+  .report-date-add {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .bmr-actions {
+    grid-column: span 2;
+  }
+
+  .table {
+    min-width: 860px;
+  }
+}
+
+@media (min-width: 992px) {
+  .page-shell {
+    padding: 40px 20px 64px;
+  }
+
+  .ambient-shape {
+    display: block;
+  }
+
+  .app-card {
+    padding: 32px;
+  }
+
+  .app-topbar {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+    gap: 20px;
+    align-items: stretch;
+    margin-bottom: 28px;
+  }
+
+  .brand-block h1 {
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+  }
+
+  .app-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    overflow: visible;
+    padding: 8px;
+    border-radius: var(--radius-lg);
+    scroll-snap-type: none;
+  }
+
+  .app-nav-button {
+    flex: 1;
+    min-width: 0;
+    min-height: 42px;
+    padding: 0 14px;
+  }
+
+  .date-panel {
+    padding: 24px;
+  }
+
+  .date-panel-compact {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 18px;
+  }
+
+  .panel,
+  .dashboard-panel,
+  .goals-panel,
+  .bmr-panel,
+  .report-print-area {
+    padding: 24px;
+    border-radius: var(--radius-lg);
+  }
+
+  .daily-layout {
+    grid-template-columns: minmax(320px, 0.45fr) minmax(0, 1fr);
+  }
+
+  .quick-add-panel,
+  .report-controls {
+    position: sticky;
+    top: 18px;
+  }
+
+  .single-page-grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(280px, 0.5fr);
+  }
+
+  .summary-grid,
+  .goal-progress-grid,
+  .meal-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .dashboard-heading {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr);
+    align-items: end;
+  }
+
+  .dashboard-heading p {
+    text-align: right;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+
+  .dashboard-chart-heading,
+  .dashboard-meta-row,
+  .report-day-header {
+    display: flex;
+  }
+
+  .macro-chart-row {
+    grid-template-columns: minmax(145px, 0.45fr) minmax(180px, 1fr) minmax(76px, auto);
+  }
+
+  .macro-chart-percent {
+    text-align: right;
+  }
+
+  .bmr-heading,
+  .goals-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .bmr-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+  }
+
+  .bmr-form,
+  .goals-form {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .bmr-actions {
+    grid-column: span 4;
+  }
+
+  .report-layout {
+    grid-template-columns: minmax(260px, 0.34fr) minmax(0, 1fr);
+  }
+
+  .report-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .report-metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .report-extremes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .table,
+  .report-table {
+    min-width: 0;
+  }
+
+  .table thead th,
+  .table tbody td,
+  .table tfoot th,
+  .table tfoot td {
+    padding: 16px 18px;
+    font-size: inherit;
+  }
+}
+
 @media print {
   @page {
     size: A4;

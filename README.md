@@ -34,7 +34,7 @@ A interface usa navegacao interna por paginas para separar o fluxo diario das co
 - Calculo proporcional dos nutrientes conforme a quantidade informada.
 - Tabela consolidada com totais de carboidratos, proteinas, gorduras e calorias.
 - Remocao de itens da refeicao atual.
-- Interface responsiva com foco em legibilidade e uso rapido.
+- Interface mobile-first e responsiva com foco em legibilidade e uso rapido em celular, tablet e desktop.
 
 ## Estrutura do projeto
 
@@ -159,7 +159,7 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 - Movimentacao de itens entre refeicoes.
 - Repeticao das refeicoes anteriores.
 - Persistencia local de alimentos, refeicoes, metas, favoritos e historico.
-- Atualizacao visual da pagina com layout mais moderno e responsivo.
+- Atualizacao visual da pagina com layout mais moderno, responsivo e mobile-first.
 - Correcao da inicializacao da data para respeitar o horario local.
 - Ajuste da organizacao do MVC, removendo duplicacao indevida da camada de visualizacao.
 - Correcao de problemas estruturais no HTML.
