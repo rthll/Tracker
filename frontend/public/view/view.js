@@ -19,7 +19,17 @@ const View = {
   },
 
   atualizarSelectRefeicoes(tiposRefeicao) {
-    const select = document.getElementById("tipoRefeicao");
+    this.preencherSelectRefeicoes("tipoRefeicao", tiposRefeicao, "almoco");
+    this.preencherSelectRefeicoes("editarTipoRefeicao", tiposRefeicao, "almoco");
+  },
+
+  preencherSelectRefeicoes(selectId, tiposRefeicao, valorFallback) {
+    const select = document.getElementById(selectId);
+
+    if (!select) {
+      return;
+    }
+
     const valorAtual = select.value;
     select.innerHTML = "";
 
@@ -32,23 +42,13 @@ const View = {
 
     select.value = tiposRefeicao.some((refeicao) => refeicao.id === valorAtual)
       ? valorAtual
-      : "almoco";
+      : valorFallback;
   },
 
   atualizarAutocompleteAlimentos(alimentos) {
     const campoBusca = document.getElementById("buscaAlimento");
     const quantidade = document.getElementById("quantidade");
     const tipoRefeicao = document.getElementById("tipoRefeicao");
-    const sugestoes = document.getElementById("sugestoesAlimentos");
-
-    sugestoes.innerHTML = "";
-
-    alimentos.forEach((alimento) => {
-      const option = document.createElement("option");
-      option.value = alimento.nome;
-      option.label = `${alimento.origem || "Base"} | ${this.formatarNumero(alimento.calorias)} kcal | C ${this.formatarNumero(alimento.carboidratos)}g, P ${this.formatarNumero(alimento.proteinas)}g, G ${this.formatarNumero(alimento.gorduras)}g`;
-      sugestoes.appendChild(option);
-    });
 
     campoBusca.disabled = !alimentos.length;
     quantidade.disabled = !alimentos.length;
@@ -56,6 +56,112 @@ const View = {
     campoBusca.placeholder = alimentos.length
       ? "Digite para buscar um alimento"
       : "Cadastre um alimento primeiro";
+  },
+
+  renderizarAtalhosBuscaAlimentos(categorias) {
+    this.renderizarAtalhosCategoriaBusca("atalhosCategoriaAlimentos", categorias, "registro");
+    this.renderizarAtalhosCategoriaBusca("atalhosCategoriaEdicaoAlimentos", categorias, "edicao");
+  },
+
+  renderizarAtalhosCategoriaBusca(containerId, categorias, contexto) {
+    const container = document.getElementById(containerId);
+
+    if (!container) {
+      return;
+    }
+
+    container.innerHTML = "";
+    categorias.forEach((categoria) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "food-category-chip";
+      button.textContent = categoria.label;
+      button.addEventListener("click", () => {
+        Controller.aplicarCategoriaBusca(categoria.id, contexto);
+      });
+      container.appendChild(button);
+    });
+  },
+
+  renderizarPainelBuscaAlimentos(contexto, secoes) {
+    const painelId = contexto === "edicao" ? "painelBuscaEdicaoAlimentos" : "painelBuscaAlimentos";
+    const painel = document.getElementById(painelId);
+
+    if (!painel) {
+      return;
+    }
+
+    painel.innerHTML = "";
+
+    const secoesVisiveis = secoes.filter((secao) => secao.alimentos.length || secao.mensagemVazia);
+    if (!secoesVisiveis.length) {
+      painel.hidden = true;
+      return;
+    }
+
+    secoesVisiveis.forEach((secao) => {
+      const grupo = document.createElement("div");
+      grupo.className = "food-search-section";
+
+      const titulo = document.createElement("div");
+      titulo.className = "food-search-section-title";
+      titulo.textContent = secao.titulo;
+      grupo.appendChild(titulo);
+
+      if (!secao.alimentos.length) {
+        const vazio = document.createElement("div");
+        vazio.className = "food-search-empty";
+        vazio.textContent = secao.mensagemVazia;
+        grupo.appendChild(vazio);
+      } else {
+        secao.alimentos.forEach((alimento) => {
+          grupo.appendChild(this.criarOpcaoBuscaAlimento(alimento, contexto));
+        });
+      }
+
+      painel.appendChild(grupo);
+    });
+
+    painel.hidden = false;
+  },
+
+  criarOpcaoBuscaAlimento(alimento, contexto) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "food-search-option";
+    button.addEventListener("click", () => {
+      Controller.selecionarAlimentoBusca(alimento.id, contexto);
+    });
+
+    const topo = document.createElement("span");
+    topo.className = "food-search-option-top";
+
+    const nome = document.createElement("span");
+    nome.className = "food-search-option-name";
+    nome.textContent = alimento.nome;
+
+    const origem = document.createElement("span");
+    origem.className = alimento.personalizado ? "food-origin-badge personal" : "food-origin-badge taco";
+    origem.textContent = alimento.personalizado ? "Personalizado" : (alimento.origem || "TACO");
+
+    const macros = document.createElement("span");
+    macros.className = "food-search-option-macros";
+    macros.textContent = `${this.formatarNumero(alimento.calorias)} kcal/100g | C ${this.formatarNumero(alimento.carboidratos)}g, P ${this.formatarNumero(alimento.proteinas)}g, G ${this.formatarNumero(alimento.gorduras)}g`;
+
+    topo.appendChild(nome);
+    topo.appendChild(origem);
+    button.appendChild(topo);
+    button.appendChild(macros);
+    return button;
+  },
+
+  ocultarPaineisBuscaAlimentos() {
+    ["painelBuscaAlimentos", "painelBuscaEdicaoAlimentos"].forEach((id) => {
+      const painel = document.getElementById(id);
+      if (painel) {
+        painel.hidden = true;
+      }
+    });
   },
 
   atualizarEstadoAlimentoSelecionado(alimento, favorito) {
@@ -461,6 +567,7 @@ const View = {
         actionCell.className = "actions-cell";
         const actionWrapper = document.createElement("div");
         actionWrapper.className = "actions-cell-inner";
+        actionWrapper.appendChild(this.criarBotaoEditar(refeicao.id, index, item.nome));
         actionWrapper.appendChild(this.criarSelectMover(refeicao.id, index, tiposRefeicao));
         actionWrapper.appendChild(this.criarBotaoRemover(refeicao.id, index, item.nome));
         actionCell.appendChild(actionWrapper);
@@ -502,6 +609,18 @@ const View = {
     return select;
   },
 
+  criarBotaoEditar(refeicaoId, index, nomeAlimento) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "editar-registro";
+    button.textContent = "Editar";
+    button.setAttribute("aria-label", `Editar ${nomeAlimento}`);
+    button.addEventListener("click", () => {
+      Controller.iniciarEdicaoRegistro(refeicaoId, index);
+    });
+    return button;
+  },
+
   criarBotaoRemover(refeicaoId, index, nomeAlimento) {
     const button = document.createElement("button");
     button.type = "button";
@@ -512,6 +631,42 @@ const View = {
       Controller.removerItem(refeicaoId, index);
     });
     return button;
+  },
+
+  mostrarFormularioEdicaoRegistro(item, refeicaoId, tiposRefeicao, alimento) {
+    const painel = document.getElementById("painelEdicaoRegistro");
+    const campoBusca = document.getElementById("editarBuscaAlimento");
+    const quantidade = document.getElementById("editarQuantidade");
+    const selectRefeicao = document.getElementById("editarTipoRefeicao");
+
+    this.preencherSelectRefeicoes("editarTipoRefeicao", tiposRefeicao, refeicaoId);
+    painel.hidden = false;
+    campoBusca.value = alimento ? alimento.nome : item.nome;
+    quantidade.value = item.quantidade > 0 ? String(item.quantidade) : "";
+    selectRefeicao.value = refeicaoId;
+    this.atualizarEstadoEdicaoRegistro(alimento);
+  },
+
+  ocultarFormularioEdicaoRegistro() {
+    const painel = document.getElementById("painelEdicaoRegistro");
+    painel.hidden = true;
+    document.getElementById("editarBuscaAlimento").value = "";
+    document.getElementById("editarQuantidade").value = "";
+    document.getElementById("detalheEdicaoRegistro").textContent = "Selecione um alimento cadastrado para salvar a edi\u00e7\u00e3o.";
+  },
+
+  atualizarEstadoEdicaoRegistro(alimento) {
+    const detalhe = document.getElementById("detalheEdicaoRegistro");
+    const botaoSalvar = document.getElementById("btnSalvarEdicaoRegistro");
+
+    if (!alimento) {
+      detalhe.textContent = "Selecione um alimento cadastrado para salvar a edi\u00e7\u00e3o.";
+      botaoSalvar.disabled = true;
+      return;
+    }
+
+    detalhe.textContent = `${this.formatarNumero(alimento.calorias)} kcal por 100g | ${this.formatarNumero(alimento.carboidratos)}g carbs, ${this.formatarNumero(alimento.proteinas)}g prot, ${this.formatarNumero(alimento.gorduras)}g gord`;
+    botaoSalvar.disabled = false;
   },
 
   atualizarRelatorioControles(periodo, datasPontuais) {

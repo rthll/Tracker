@@ -3,7 +3,7 @@ const path = require("path");
 
 const raizProjeto = path.resolve(__dirname, "..");
 const arquivoEntrada = path.join(raizProjeto, "data", "Taco-4a-Edicao(CMVCol taco3).csv");
-const arquivoSaida = path.join(raizProjeto, "data", "taco-alimentos.js");
+const arquivoSaida = path.join(raizProjeto, "frontend", "public", "data", "taco-alimentos.js");
 
 function parseNumero(valor) {
   const texto = String(valor || "").trim();

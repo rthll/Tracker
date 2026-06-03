@@ -27,9 +27,26 @@ const Model = {
   ],
   refeicaoPadrao: "almoco",
 
-  init() {
+  init(dadosRemotos = null) {
     this.alimentosTaco = this.carregarAlimentosTaco();
+    this.resetarDadosUsuario();
+
+    if (dadosRemotos) {
+      this.carregarDados(dadosRemotos);
+      this.salvarLocal();
+      return;
+    }
+
     this.carregar();
+  },
+
+  resetarDadosUsuario() {
+    this.alimentosPersonalizados = [];
+    this.refeicoesPorData = {};
+    this.favoritos = [];
+    this.historicoAlimentos = [];
+    this.metasDiarias = this.normalizarMetas(null);
+    this.tmbPerfil = this.normalizarTmbPerfil(null);
   },
 
   carregarAlimentosTaco() {
@@ -53,36 +70,66 @@ const Model = {
         return;
       }
 
-      const dados = JSON.parse(dadosSalvos);
-      this.alimentosPersonalizados = Array.isArray(dados.alimentosPersonalizados)
-        ? dados.alimentosPersonalizados.map((alimento) => this.normalizarAlimentoPersonalizado(alimento))
-        : Array.isArray(dados.alimentos)
-          ? dados.alimentos.map((alimento) => this.normalizarAlimentoPersonalizado(alimento))
-        : [];
-      this.refeicoesPorData = this.normalizarRefeicoes(dados.refeicoesPorData);
-      this.favoritos = Array.isArray(dados.favoritos) ? dados.favoritos : [];
-      this.historicoAlimentos = Array.isArray(dados.historicoAlimentos)
-        ? dados.historicoAlimentos
-        : [];
-      this.metasDiarias = this.normalizarMetas(dados.metasDiarias);
-      this.tmbPerfil = this.normalizarTmbPerfil(dados.tmbPerfil);
+      this.carregarDados(JSON.parse(dadosSalvos));
     } catch (error) {
       console.warn("Nao foi possivel carregar os dados locais.", error);
     }
   },
 
-  salvar() {
+  carregarDados(dados) {
+    this.alimentosPersonalizados = Array.isArray(dados && dados.alimentosPersonalizados)
+      ? dados.alimentosPersonalizados.map((alimento) => this.normalizarAlimentoPersonalizado(alimento))
+      : Array.isArray(dados && dados.alimentos)
+        ? dados.alimentos.map((alimento) => this.normalizarAlimentoPersonalizado(alimento))
+      : [];
+    this.refeicoesPorData = this.normalizarRefeicoes(dados && dados.refeicoesPorData);
+    this.favoritos = Array.isArray(dados && dados.favoritos) ? dados.favoritos : [];
+    this.historicoAlimentos = Array.isArray(dados && dados.historicoAlimentos)
+      ? dados.historicoAlimentos
+      : [];
+    this.metasDiarias = this.normalizarMetas(dados && dados.metasDiarias);
+    this.tmbPerfil = this.normalizarTmbPerfil(dados && dados.tmbPerfil);
+  },
+
+  getDadosPersistencia() {
+    return {
+      alimentosPersonalizados: this.alimentosPersonalizados,
+      refeicoesPorData: this.refeicoesPorData,
+      favoritos: this.favoritos,
+      historicoAlimentos: this.historicoAlimentos,
+      metasDiarias: this.metasDiarias,
+      tmbPerfil: this.tmbPerfil
+    };
+  },
+
+  salvar(alteracao = null) {
+    const dados = this.getDadosPersistencia();
+    const usuario = window.TrackerAuth && typeof window.TrackerAuth.getCurrentUser === "function"
+      ? window.TrackerAuth.getCurrentUser()
+      : null;
+
+    this.salvarLocal(dados);
+
+    if (!usuario || !window.TrackerDataService) {
+      return;
+    }
+
+    const salvarRemoto = alteracao && typeof window.TrackerDataService.applyIncrementalChange === "function"
+      ? window.TrackerDataService.applyIncrementalChange(usuario.uid, alteracao, dados)
+      : window.TrackerDataService.saveUserData(usuario.uid, dados);
+
+    if (salvarRemoto && typeof salvarRemoto.catch === "function") {
+      salvarRemoto.catch((error) => {
+        console.warn("Nao foi possivel salvar os dados no Firestore.", error);
+      });
+    }
+  },
+
+  salvarLocal(dados = this.getDadosPersistencia()) {
     try {
       window.localStorage.setItem(
         this.storageKey,
-        JSON.stringify({
-          alimentosPersonalizados: this.alimentosPersonalizados,
-          refeicoesPorData: this.refeicoesPorData,
-          favoritos: this.favoritos,
-          historicoAlimentos: this.historicoAlimentos,
-          metasDiarias: this.metasDiarias,
-          tmbPerfil: this.tmbPerfil
-        })
+        JSON.stringify(dados)
       );
     } catch (error) {
       console.warn("Nao foi possivel salvar os dados locais.", error);
@@ -133,7 +180,7 @@ const Model = {
 
   atualizarMetasDiarias(metas) {
     this.metasDiarias = this.normalizarMetas(metas);
-    this.salvar();
+    this.salvar({ tipo: "goals", metasDiarias: this.metasDiarias });
     return this.getMetasDiarias();
   },
 
@@ -143,7 +190,7 @@ const Model = {
 
   atualizarTmbPerfil(perfil) {
     this.tmbPerfil = this.normalizarTmbPerfil(perfil);
-    this.salvar();
+    this.salvar({ tipo: "bmr", tmbPerfil: this.tmbPerfil });
     return this.getTmbPerfil();
   },
 
@@ -238,6 +285,7 @@ const Model = {
 
   normalizarItemRefeicao(item) {
     return {
+      id: item.id || this.criarId("entry"),
       alimentoId: item.alimentoId || null,
       nome: String(item.nome || "").trim(),
       quantidade: this.valorNumerico(item.quantidade),
@@ -274,7 +322,7 @@ const Model = {
   adicionarAlimento(alimento) {
     const alimentoNormalizado = this.normalizarAlimentoPersonalizado(alimento);
     this.alimentosPersonalizados.push(alimentoNormalizado);
-    this.salvar();
+    this.salvar({ tipo: "customFood", alimento: alimentoNormalizado });
     return alimentoNormalizado;
   },
 
@@ -315,7 +363,11 @@ const Model = {
       this.favoritos = [alimentoId, ...this.favoritos];
     }
 
-    this.salvar();
+    this.salvar({
+      tipo: "userMeta",
+      favoritos: this.favoritos,
+      historicoAlimentos: this.historicoAlimentos
+    });
     return this.isFavorito(alimentoId);
   },
 
@@ -329,7 +381,7 @@ const Model = {
       .filter(Boolean);
   },
 
-  registrarHistoricoAlimento(alimentoId) {
+  registrarHistoricoAlimento(alimentoId, salvar = true) {
     const alimento = this.getAlimentoPorId(alimentoId);
 
     if (!alimento) {
@@ -340,7 +392,14 @@ const Model = {
       alimentoId,
       ...this.historicoAlimentos.filter((id) => id !== alimentoId)
     ].slice(0, this.limiteHistorico);
-    this.salvar();
+
+    if (salvar) {
+      this.salvar({
+        tipo: "userMeta",
+        favoritos: this.favoritos,
+        historicoAlimentos: this.historicoAlimentos
+      });
+    }
   },
 
   getHistoricoAlimentos() {
@@ -365,7 +424,7 @@ const Model = {
     const refeicoesDoDia = this.garantirRefeicoesDoDia(data);
     const refeicaoNormalizada = this.normalizarRefeicaoId(refeicaoId);
     refeicoesDoDia[refeicaoNormalizada].push(item);
-    this.salvar();
+    this.salvar({ tipo: "day", data, refeicoesDoDia });
   },
 
   getRefeicoesDoDia(data) {
@@ -393,6 +452,45 @@ const Model = {
 
   getQuantidadeItensDia(data) {
     return this.getItensDoDia(data).length;
+  },
+
+  getItemRefeicao(data, refeicaoId, index) {
+    const refeicao = this.getRefeicao(data, refeicaoId);
+
+    if (!Array.isArray(refeicao) || index < 0 || index >= refeicao.length) {
+      return null;
+    }
+
+    return { ...refeicao[index] };
+  },
+
+  atualizarItemRefeicao(data, refeicaoOrigemId, index, refeicaoDestinoId, itemAtualizado) {
+    const origemId = this.normalizarRefeicaoId(refeicaoOrigemId);
+    const destinoId = this.normalizarRefeicaoId(refeicaoDestinoId);
+
+    if (!data) {
+      return false;
+    }
+
+    const refeicoesDoDia = this.garantirRefeicoesDoDia(data);
+    const origem = refeicoesDoDia[origemId];
+    const destino = refeicoesDoDia[destinoId];
+
+    if (!Array.isArray(origem) || !Array.isArray(destino) || index < 0 || index >= origem.length) {
+      return false;
+    }
+
+    const itemNormalizado = this.normalizarItemRefeicao(itemAtualizado);
+
+    if (origemId === destinoId) {
+      origem[index] = itemNormalizado;
+    } else {
+      origem.splice(index, 1);
+      destino.push(itemNormalizado);
+    }
+
+    this.salvar({ tipo: "day", data, refeicoesDoDia });
+    return true;
   },
 
   gerarRelatorio(datas) {
@@ -583,17 +681,29 @@ const Model = {
     const refeicoesDestino = this.garantirRefeicoesDoDia(dataDestino);
 
     this.tiposRefeicao.forEach((refeicao) => {
-      const itensCopiados = (refeicoesOrigem[refeicao.id] || []).map((item) => ({ ...item }));
+      const itensCopiados = (refeicoesOrigem[refeicao.id] || []).map((item) => ({
+        ...item,
+        id: this.criarId("entry")
+      }));
       refeicoesDestino[refeicao.id].push(...itensCopiados);
 
       itensCopiados.forEach((item) => {
         if (item.alimentoId) {
-          this.registrarHistoricoAlimento(item.alimentoId);
+          this.registrarHistoricoAlimento(item.alimentoId, false);
         }
       });
     });
 
-    this.salvar();
+    this.salvar({
+      tipo: "day",
+      data: dataDestino,
+      refeicoesDoDia: refeicoesDestino
+    });
+    this.salvar({
+      tipo: "userMeta",
+      favoritos: this.favoritos,
+      historicoAlimentos: this.historicoAlimentos
+    });
     return quantidadeItens;
   },
 
@@ -615,7 +725,7 @@ const Model = {
 
     const [item] = origem.splice(index, 1);
     destino.push(item);
-    this.salvar();
+    this.salvar({ tipo: "day", data, refeicoesDoDia });
     return true;
   },
 
@@ -627,6 +737,10 @@ const Model = {
     }
 
     refeicao.splice(index, 1);
-    this.salvar();
+    this.salvar({
+      tipo: "day",
+      data,
+      refeicoesDoDia: this.getRefeicoesDoDia(data)
+    });
   }
 };

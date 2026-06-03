@@ -1,10 +1,12 @@
 # Tracker de Macronutrientes
 
-Aplicacao web estatica para cadastro de alimentos e montagem de refeicoes diarias com acompanhamento de carboidratos, proteinas, gorduras e calorias.
+Aplicacao web com frontend Vite, backend Node.js/Express, Firebase Auth e persistencia Firestore para cadastro de alimentos, montagem de refeicoes diarias e acompanhamento de carboidratos, proteinas, gorduras e calorias.
 
 ## Visao geral
 
-O projeto foi estruturado com uma abordagem simples em MVC, mantendo responsabilidades separadas entre interface, controle de eventos e dados locais. A proposta e oferecer um fluxo direto para registrar alimentos, adicionar quantidades consumidas e visualizar os totais nutricionais por data.
+O projeto usa frontend e backend separados. O frontend roda com Vite e preserva a organizacao MVC da interface. O backend Node.js com Express governa as rotas da aplicacao, valida o ID token Firebase e persiste os dados no Firestore via Firebase Admin SDK.
+
+A proposta e oferecer um fluxo direto para registrar alimentos, adicionar quantidades consumidas e visualizar os totais nutricionais por data.
 
 A interface usa navegacao interna por paginas para separar o fluxo diario das configuracoes: Dashboard, Refeicoes, Alimentos, Metas, Relatorios e Calculadora.
 
@@ -13,7 +15,8 @@ A interface usa navegacao interna por paginas para separar o fluxo diario das co
 - Cadastro de alimentos personalizados com macros e calorias por 100g.
 - Base TACO importada com alimentos padrao por 100g.
 - Navegacao por paginas internas para separar as principais funcoes.
-- Autocomplete para buscar alimentos ao digitar.
+- Busca propria de alimentos com correspondencia parcial, recentes, origem TACO/personalizado e atalhos por categoria de macro.
+- Busca otimizada com indice em memoria, cache de resultados e debounce durante a digitacao.
 - Favoritos para alimentos usados com frequencia.
 - Historico de alimentos adicionados recentemente.
 - Registro separado por refeicao: cafe da manha, almoco, jantar e lanches.
@@ -28,8 +31,9 @@ A interface usa navegacao interna por paginas para separar o fluxo diario das co
 - Calculadora de taxa metabolica basal pela equacao de Mifflin-St Jeor.
 - Aplicacao da TMB estimada como meta diaria de calorias.
 - Movimentacao de alimentos entre refeicoes.
+- Edicao de registros ja lancados, com alteracao de alimento, quantidade e refeicao.
 - Botao para repetir as refeicoes do dia anterior.
-- Persistencia local com `localStorage`.
+- Persistencia em Firestore por usuario autenticado, com fallback local em `localStorage`.
 - Selecao de uma data para organizar as refeicoes do dia.
 - Calculo proporcional dos nutrientes conforme a quantidade informada.
 - Tabela consolidada com totais de carboidratos, proteinas, gorduras e calorias.
@@ -40,47 +44,195 @@ A interface usa navegacao interna por paginas para separar o fluxo diario das co
 
 ```text
 Tracker/
-|-- controller/
-|   `-- controller.js
-|-- css/
-|   `-- index.css
+|-- backend/
+|   |-- src/
+|   |   |-- config/
+|   |   |-- controllers/
+|   |   |-- middlewares/
+|   |   |-- routes/
+|   |   |-- services/
+|   |   |-- app.js
+|   |   `-- server.js
+|   |-- .env.example
+|   |-- package.json
+|   `-- package-lock.json
+|-- frontend/
+|   |-- public/
+|   |   |-- controller/
+|   |   |-- css/
+|   |   |-- data/
+|   |   |-- model/
+|   |   |-- services/
+|   |   `-- view/
+|   |-- index.html
+|   |-- package.json
+|   `-- package-lock.json
 |-- data/
-|   |-- Taco-4a-Edicao(CMVCol taco3).csv
-|   `-- taco-alimentos.js
-|-- model/
-|   `-- model.js
+|   `-- Taco-4a-Edicao(CMVCol taco3).csv
+|-- firebase/
+|   |-- firestore.indexes.json
+|   `-- firestore.rules
 |-- scripts/
 |   `-- converter-taco.js
-|-- view/
-|   `-- view.js
-|-- index.html
+|-- .firebaserc
+|-- .gitignore
+|-- firebase.json
+|-- package.json
 `-- README.md
 ```
 
-## Arquitetura MVC
+## Execucao Local
+
+Instale as dependencias dos dois projetos:
+
+```bash
+cd frontend
+npm install
+cd ../backend
+npm install
+```
+
+Inicie o backend:
+
+```bash
+cd backend
+npm run dev
+```
+
+Inicie o frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+URLs locais padrao:
+
+- Frontend Vite: `http://127.0.0.1:5173`
+- Backend Express: `http://127.0.0.1:3333`
+- Health check: `http://127.0.0.1:3333/api/health`
+
+O frontend usa `frontend/.env.local` para configurar `VITE_TRACKER_API_BASE_URL` e `VITE_FIREBASE_*`.
+
+Responsabilidades atuais:
+
+- Frontend: interface, Firebase Auth, busca local TACO, estado visual e chamadas HTTP autenticadas para a API.
+- Backend: API propria da aplicacao, validacao de ID token Firebase, persistencia Firestore, health check, CORS e governanca de rotas server-side.
+
+## Firebase
+
+O frontend esta integrado ao Firebase Web SDK para autenticacao. A persistencia Firestore e governada pelo backend via Firebase Admin SDK.
+
+Servicos usados nesta etapa:
+
+- Firebase Authentication com e-mail/senha no frontend.
+- Cloud Firestore persistido pelo backend apos validacao do ID token Firebase.
+- Firebase Hosting configurado para servir `frontend/dist`.
+
+Arquivos relevantes:
+
+- `frontend/src/firebase.js`: inicializacao do Firebase Auth e ponte de autenticacao para a API.
+- `frontend/src/api-config.js`: configuracao da URL da API backend no frontend.
+- `frontend/.env.example`: variaveis `VITE_FIREBASE_*` para deploy.
+- `backend/src/config/firebase-admin.js`: inicializacao do Firebase Admin SDK.
+- `backend/src/routes/tracker.routes.js`: rotas protegidas de persistencia do tracker.
+- `firebase/firestore.rules`: regras de seguranca por usuario.
+- `firebase/firestore.indexes.json`: indices do Firestore.
+- `firebase.json`: configuracao de Hosting e Firestore.
+- `.firebaserc`: projeto Firebase padrao.
+
+Estrutura atual no Firestore:
+
+```text
+users/{uid}
+users/{uid}/customFoods/{foodId}
+users/{uid}/days/{date}
+users/{uid}/days/{date}/entries/{entryId}
+users/{uid}/goals/current
+users/{uid}/bmr/profile
+```
+
+O documento `users/{uid}` guarda dados leves de usuario do tracker, como favoritos e historico. As demais colecoes separam alimentos personalizados, dias, lancamentos, metas e perfil TMB. A base TACO continua estatica no frontend nesta fase.
+
+Para o backend acessar Firestore via Firebase Admin SDK, configure uma credencial local segura em `backend/.env.local`.
+
+Opcao 1, caminho do arquivo JSON da service account:
+
+```env
+FIREBASE_PROJECT_ID=trackermacro-5756a
+GOOGLE_APPLICATION_CREDENTIALS=C:\caminho\seguro\service-account.json
+```
+
+Opcao 2, service account em base64:
+
+```env
+FIREBASE_PROJECT_ID=trackermacro-5756a
+FIREBASE_SERVICE_ACCOUNT_BASE64=...
+```
+
+Nao salve service account no repositorio. Use uma chave nova se alguma chave anterior foi exposta.
+
+A persistencia usa escrita incremental:
+
+- metas atualizam apenas `goals/current`;
+- TMB atualiza apenas `bmr/profile`;
+- alimento personalizado atualiza apenas `customFoods/{foodId}`;
+- favoritos e historico atualizam apenas `users/{uid}`;
+- refeicoes atualizam apenas `days/{date}` e `days/{date}/entries`.
+
+Regras de seguranca:
+
+```text
+usuarios autenticados podem ler/escrever apenas em users/{uid}
+```
+
+## Arquitetura
+
+### Frontend
+
+Diretorio: `frontend/`
+
+Responsavel por:
+
+- Renderizar a interface do tracker.
+- Controlar navegacao e eventos da UI.
+- Executar Firebase Auth no navegador.
+- Enviar ID token para o backend.
+- Manter estado local da tela e fallback em `localStorage`.
+- Fazer busca local na base TACO estatica.
+
+Arquivos principais:
+
+- `frontend/index.html`
+- `frontend/src/firebase.js`
+- `frontend/src/api-config.js`
+- `frontend/public/model/model.js`
+- `frontend/public/view/view.js`
+- `frontend/public/controller/controller.js`
+- `frontend/public/services/api.js`
 
 ### Model
 
-Arquivo: `model/model.js`
+Arquivo: `frontend/public/model/model.js`
 
 Responsavel por armazenar:
 
 - A lista de alimentos cadastrados.
-- A base TACO carregada de `data/taco-alimentos.js`.
+- A base TACO carregada de `frontend/public/data/taco-alimentos.js`.
 - As refeicoes agrupadas por data e tipo de refeicao.
 - As metas diarias de macronutrientes e calorias.
 - O ultimo perfil usado na calculadora de taxa metabolica basal.
 - Favoritos e historico de alimentos.
 - As operacoes de adicao, consulta, repeticao, movimentacao e remocao dos dados.
-- A sincronizacao dos dados com `localStorage`.
+- A emissao de alteracoes incrementais para sincronizacao via backend.
 
 ### View
 
-Arquivo: `view/view.js`
+Arquivo: `frontend/public/view/view.js`
 
 Responsavel por:
 
-- Atualizar o autocomplete de alimentos disponiveis.
+- Renderizar a busca propria de alimentos, resultados por categoria e origem nutricional.
 - Alternar as paginas internas da aplicacao.
 - Renderizar favoritos, historico e alimentos personalizados.
 - Renderizar os totais por refeicao.
@@ -94,7 +246,7 @@ Responsavel por:
 
 ### Controller
 
-Arquivo: `controller/controller.js`
+Arquivo: `frontend/public/controller/controller.js`
 
 Responsavel por:
 
@@ -103,22 +255,42 @@ Responsavel por:
 - Controlar a navegacao entre Dashboard, Refeicoes, Alimentos, Metas, Relatorios e Calculadora.
 - Validar os dados informados pelo usuario.
 - Calcular os valores proporcionais da refeicao.
+- Editar registros existentes e recalcular os macronutrientes.
 - Salvar e aplicar as metas diarias.
 - Calcular TMB e aplicar o resultado como meta calorica quando solicitado.
 - Gerar relatorios por periodo e acionar a exportacao em PDF pela impressao do navegador.
-- Orquestrar busca, selecao, favoritos, historico, movimentacao e repeticao entre `Model` e `View`.
+- Orquestrar busca parcial, selecao, favoritos, historico, categorias nutricionais, movimentacao e repeticao entre `Model` e `View`.
+
+### Backend
+
+Diretorio: `backend/`
+
+Responsavel por:
+
+- Validar ID token Firebase.
+- Ler e gravar dados no Firestore via Firebase Admin SDK.
+- Aplicar escrita incremental por tipo de alteracao.
+- Expor rotas protegidas da aplicacao.
+- Gerenciar CORS e health check.
+
+Rotas principais:
+
+- `GET /api/health`
+- `GET /api/tracker/state`
+- `PUT /api/tracker/state`
+- `PATCH /api/tracker/change`
 
 ## Base TACO
 
 O arquivo original da TACO fica em `data/Taco-4a-Edicao(CMVCol taco3).csv`.
 
-Para manter o app funcionando ao abrir diretamente o `index.html`, o CSV e convertido para um arquivo JavaScript estatico:
+O CSV e convertido para um arquivo JavaScript estatico usado pelo frontend:
 
 ```bash
 node scripts/converter-taco.js
 ```
 
-Esse comando gera `data/taco-alimentos.js` com `window.TACO_ALIMENTOS`.
+Esse comando gera `frontend/public/data/taco-alimentos.js` com `window.TACO_ALIMENTOS`.
 
 Regras de IDs:
 
@@ -127,10 +299,6 @@ Regras de IDs:
 - Alimentos personalizados antigos sao migrados automaticamente para o prefixo `custom:`.
 
 Os valores da TACO sao por 100g. Valores `Tr` e `NA` sao tratados como `0` na conversao.
-
-## Como executar
-
-Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um navegador moderno.
 
 ## Fluxo de uso
 
@@ -154,11 +322,12 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 - Dashboard organizada com resumo calorico, distribuicao percentual dos macros e grafico de meta x consumido.
 - Relatorios nutricionais exportaveis em PDF com metricas de consistencia e macronutrientes.
 - Reorganizacao da interface em paginas especificas por funcao.
-- Importacao da base TACO por script de conversao para uso nativo no autocomplete.
+- Importacao da base TACO por script de conversao para uso nativo na busca de alimentos.
 - Calculadora de taxa metabolica basal com persistencia local e atalho para meta calorica.
 - Movimentacao de itens entre refeicoes.
+- Edicao de itens lancados nas refeicoes.
 - Repeticao das refeicoes anteriores.
-- Persistencia local de alimentos, refeicoes, metas, favoritos e historico.
+- Persistencia em Firestore com escrita incremental por usuario.
 - Atualizacao visual da pagina com layout mais moderno, responsivo e mobile-first.
 - Correcao da inicializacao da data para respeitar o horario local.
 - Ajuste da organizacao do MVC, removendo duplicacao indevida da camada de visualizacao.
@@ -168,5 +337,5 @@ Como se trata de um projeto estatico, basta abrir o arquivo `index.html` em um n
 
 ## Limitacoes atuais
 
-- Os dados ficam salvos no navegador atual via `localStorage`.
-- Nao ha integracao com backend, autenticacao ou sincronizacao entre dispositivos.
+- A base TACO ainda e estatica no frontend.
+- O backend precisa de credencial Firebase Admin configurada no ambiente para ler/gravar Firestore.
