@@ -24,3 +24,14 @@ credentials*.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Claude Code workspace files.
+.claude/
+*-skill.md
+
+# Personal reference files.
+*.pdf
+
+# One-time data conversion scripts and raw source data.
+scripts/
+data/
