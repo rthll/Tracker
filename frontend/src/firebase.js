@@ -1,9 +1,9 @@
 import { initializeApp } from "firebase/app";
 import {
   browserLocalPersistence,
-  createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
   signOut
@@ -29,9 +29,9 @@ window.TrackerAuth = {
     return signInWithEmailAndPassword(auth, email, password);
   },
 
-  async register(email, password) {
+  async resetPassword(email) {
     await persistenceReady;
-    return createUserWithEmailAndPassword(auth, email, password);
+    return sendPasswordResetEmail(auth, email);
   },
 
   logout() {

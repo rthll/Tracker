@@ -17,11 +17,13 @@ const Controller = {
   timerBuscaRegistro: null,
   timerBuscaEdicao: null,
   usuarioAtual: null,
+  cadastroPendenteEmail: "",
+  cadastroCodigoSolicitado: false,
   eventosIniciados: false,
 
   init(dadosRemotos = null, usuario = null) {
     this.usuarioAtual = usuario;
-    Model.init(dadosRemotos);
+    Model.init(dadosRemotos, usuario && usuario.uid);
     View.atualizarSelectRefeicoes(Model.getTiposRefeicao());
 
     const inputData = document.getElementById("dataSelecionada");
@@ -59,6 +61,13 @@ const Controller = {
       });
       document.getElementById("btnUsarTmbMeta").addEventListener("click", () => {
         this.usarTmbComoMetaCalorica();
+      });
+      document.getElementById("tmbObjetivo")?.addEventListener("change", () => {
+        const perfil = Model.getTmbPerfil();
+        if (perfil.resultado > 0) this.calcularTmb();
+      });
+      document.getElementById("btnUsarMacrosMeta")?.addEventListener("click", () => {
+        this.usarMacrosComoMetas();
       });
       document.getElementById("relatorioPeriodo").addEventListener("change", () => {
         this.atualizarRelatorio();
@@ -170,6 +179,8 @@ const Controller = {
     window.TrackerAuth.onChange(async (usuario) => {
       if (!usuario) {
         this.usuarioAtual = null;
+        Model.definirUsuarioStorage(null);
+        Model.resetarDadosUsuario();
         this.mostrarAutenticacao("");
         return;
       }
@@ -201,17 +212,63 @@ const Controller = {
     document.getElementById("btnRegister").addEventListener("click", () => {
       this.cadastrarUsuario();
     });
+    document.getElementById("btnResetPassword").addEventListener("click", () => {
+      this.resetarSenhaUsuario();
+    });
     document.getElementById("authPassword").addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         this.loginUsuario();
       }
+    });
+    document.getElementById("authSignupCode").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        this.confirmarCadastroUsuario();
+      }
+    });
+    document.getElementById("btnReenviarCodigo").addEventListener("click", () => {
+      this.reenviarCodigoCadastro();
+    });
+    document.getElementById("authEmail").addEventListener("input", () => {
+      if (
+        this.cadastroCodigoSolicitado
+        && this.cadastroPendenteEmail
+        && document.getElementById("authEmail").value.trim().toLowerCase() !== this.cadastroPendenteEmail
+      ) {
+        this.resetarEtapaCodigoCadastro();
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !document.getElementById("contaModalOverlay").hidden) {
+        this.fecharModalConta();
+      }
+    });
+    document.getElementById("btnConta").addEventListener("click", () => {
+      this.abrirModalConta();
+    });
+    document.getElementById("btnFecharConta").addEventListener("click", () => {
+      this.fecharModalConta();
+    });
+    document.getElementById("contaModalOverlay").addEventListener("click", (event) => {
+      if (event.target === event.currentTarget) {
+        this.fecharModalConta();
+      }
+    });
+    document.getElementById("btnExcluirConta").addEventListener("click", () => {
+      this.mostrarConfirmacaoExclusao();
+    });
+    document.getElementById("btnCancelarExclusao").addEventListener("click", () => {
+      this.ocultarConfirmacaoExclusao();
+    });
+    document.getElementById("btnConfirmarExcluirConta").addEventListener("click", () => {
+      this.confirmarExclusaoConta();
     });
   },
 
   getCredenciaisAutenticacao() {
     return {
       email: document.getElementById("authEmail").value.trim(),
-      password: document.getElementById("authPassword").value
+      password: document.getElementById("authPassword").value,
+      signupCode: document.getElementById("authSignupCode").value.trim()
     };
   },
 
@@ -219,31 +276,152 @@ const Controller = {
     const { email, password } = this.getCredenciaisAutenticacao();
 
     if (!email || !password) {
-      this.setAuthStatus("Informe e-mail e senha.");
+      this.setAuthStatus("Informe e-mail e senha.", "error");
       return;
     }
 
+    const btn = document.getElementById("btnLogin");
+    btn.disabled = true;
     try {
       this.setAuthStatus("Entrando...");
       await window.TrackerAuth.login(email, password);
     } catch (error) {
-      this.setAuthStatus(this.formatarErroAutenticacao(error));
+      this.setAuthStatus(this.formatarErroAutenticacao(error), "error");
+    } finally {
+      btn.disabled = false;
     }
   },
 
   async cadastrarUsuario() {
-    const { email, password } = this.getCredenciaisAutenticacao();
-
-    if (!email || password.length < 6) {
-      this.setAuthStatus("Informe e-mail e senha com pelo menos 6 caracteres.");
+    if (this.cadastroCodigoSolicitado) {
+      await this.confirmarCadastroUsuario();
       return;
     }
 
+    const { email, password } = this.getCredenciaisAutenticacao();
+
+    if (!email || password.length < 6) {
+      this.setAuthStatus("Informe e-mail e senha com pelo menos 6 caracteres.", "error");
+      return;
+    }
+
+    const btn = document.getElementById("btnRegister");
+    btn.disabled = true;
     try {
-      this.setAuthStatus("Criando conta...");
-      await window.TrackerAuth.register(email, password);
+      this.setAuthStatus("Enviando codigo de cadastro...");
+      const resultado = await window.Api.requestSignupCode(email);
+      this.cadastroPendenteEmail = email.toLowerCase();
+      this.mostrarEtapaCodigoCadastro(true);
+      const mensagemDev = resultado.devCode
+        ? ` Codigo em desenvolvimento: ${resultado.devCode}`
+        : "";
+      this.setAuthStatus(`Codigo enviado para ${email}. Ele expira em ${resultado.expiresInMinutes} minutos.${mensagemDev}`, "success");
     } catch (error) {
-      this.setAuthStatus(this.formatarErroAutenticacao(error));
+      this.setAuthStatus(this.formatarErroAutenticacao(error), "error");
+    } finally {
+      btn.disabled = false;
+    }
+  },
+
+  async confirmarCadastroUsuario() {
+    const { email, password, signupCode } = this.getCredenciaisAutenticacao();
+
+    if (!email || password.length < 6) {
+      this.setAuthStatus("Informe e-mail e senha com pelo menos 6 caracteres.", "error");
+      return;
+    }
+
+    if (!/^\d{6}$/.test(signupCode)) {
+      this.setAuthStatus("Informe o codigo de 6 digitos recebido por e-mail.", "error");
+      return;
+    }
+
+    if (this.cadastroPendenteEmail && this.cadastroPendenteEmail !== email.toLowerCase()) {
+      this.setAuthStatus("Solicite um novo codigo para este e-mail.", "error");
+      return;
+    }
+
+    const btn = document.getElementById("btnRegister");
+    btn.disabled = true;
+    try {
+      this.setAuthStatus("Confirmando cadastro...");
+      await window.Api.completeSignup(email, password, signupCode);
+      this.setAuthStatus("Cadastro confirmado. Entrando...", "success");
+      await window.TrackerAuth.login(email, password);
+      this.resetarEtapaCodigoCadastro();
+    } catch (error) {
+      this.setAuthStatus(this.formatarErroAutenticacao(error), "error");
+    } finally {
+      btn.disabled = false;
+    }
+  },
+
+  async resetarSenhaUsuario() {
+    const { email } = this.getCredenciaisAutenticacao();
+
+    if (!email) {
+      this.setAuthStatus("Informe seu e-mail para receber a redefinicao de senha.", "error");
+      return;
+    }
+
+    const btn = document.getElementById("btnResetPassword");
+    btn.disabled = true;
+    try {
+      this.setAuthStatus("Enviando e-mail de redefinicao...");
+      await window.TrackerAuth.resetPassword(email);
+      this.setAuthStatus("E-mail de redefinicao enviado. Verifique sua caixa de entrada.", "success");
+    } catch (error) {
+      this.setAuthStatus(this.formatarErroAutenticacao(error), "error");
+    } finally {
+      btn.disabled = false;
+    }
+  },
+
+  mostrarEtapaCodigoCadastro(ativo) {
+    const botaoCadastro = document.getElementById("btnRegister");
+
+    this.cadastroCodigoSolicitado = ativo;
+    document.getElementById("authSignupCodeGroup").hidden = !ativo;
+    botaoCadastro.textContent = ativo ? "Concluir cadastro" : "Criar conta";
+    botaoCadastro.classList.toggle("btn-accent", ativo);
+    botaoCadastro.classList.toggle("btn-outline-secondary", !ativo);
+
+    if (ativo) {
+      document.getElementById("authSignupCode").focus();
+    }
+  },
+
+  resetarEtapaCodigoCadastro() {
+    this.cadastroPendenteEmail = "";
+    this.cadastroCodigoSolicitado = false;
+    document.getElementById("authSignupCode").value = "";
+    this.mostrarEtapaCodigoCadastro(false);
+  },
+
+  async reenviarCodigoCadastro() {
+    const { email, password } = this.getCredenciaisAutenticacao();
+
+    if (!email || password.length < 6) {
+      this.setAuthStatus("Informe e-mail e senha antes de reenviar o codigo.");
+      return;
+    }
+
+    const btn = document.getElementById("btnReenviarCodigo");
+    btn.disabled = true;
+    try {
+      this.setAuthStatus("Reenviando codigo...");
+      const resultado = await window.Api.requestSignupCode(email);
+      this.cadastroPendenteEmail = email.toLowerCase();
+      document.getElementById("authSignupCode").value = "";
+      document.getElementById("authSignupCode").focus();
+      const mensagemDev = resultado.devCode
+        ? ` Codigo em desenvolvimento: ${resultado.devCode}`
+        : "";
+      this.setAuthStatus(`Novo codigo enviado para ${email}. Ele expira em ${resultado.expiresInMinutes} minutos.${mensagemDev}`, "success");
+    } catch (error) {
+      this.setAuthStatus(this.formatarErroAutenticacao(error), "error");
+    } finally {
+      btn.disabled = false;
     }
   },
 
@@ -253,6 +431,83 @@ const Controller = {
       window.location.hash = "";
     } catch (error) {
       console.warn("Nao foi possivel sair.", error);
+    }
+  },
+
+  abrirModalConta() {
+    const email = this.usuarioAtual && this.usuarioAtual.email
+      ? this.usuarioAtual.email
+      : "—";
+    document.getElementById("contaEmailExibido").textContent = email;
+    this.ocultarConfirmacaoExclusao();
+    document.getElementById("contaModalOverlay").hidden = false;
+    document.getElementById("btnFecharConta").focus();
+    this._removerFocusTrap = this._ativarFocusTrap(document.querySelector(".conta-modal"));
+  },
+
+  fecharModalConta() {
+    document.getElementById("contaModalOverlay").hidden = true;
+    this.ocultarConfirmacaoExclusao();
+    if (this._removerFocusTrap) {
+      this._removerFocusTrap();
+      this._removerFocusTrap = null;
+    }
+    const btnConta = document.getElementById("btnConta");
+    if (btnConta) btnConta.focus();
+  },
+
+  _ativarFocusTrap(elemento) {
+    const seletorFocusavel = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const handler = (event) => {
+      if (event.key !== "Tab") return;
+      const focusaveis = [...elemento.querySelectorAll(seletorFocusavel)];
+      if (!focusaveis.length) return;
+      const primeiro = focusaveis[0];
+      const ultimo = focusaveis[focusaveis.length - 1];
+      if (event.shiftKey) {
+        if (document.activeElement === primeiro) {
+          event.preventDefault();
+          ultimo.focus();
+        }
+      } else if (document.activeElement === ultimo) {
+        event.preventDefault();
+        primeiro.focus();
+      }
+    };
+    elemento.addEventListener("keydown", handler);
+    return () => elemento.removeEventListener("keydown", handler);
+  },
+
+  mostrarConfirmacaoExclusao() {
+    document.getElementById("contaConfirmacaoExclusao").hidden = false;
+    document.getElementById("btnExcluirConta").hidden = true;
+    document.getElementById("contaStatus").textContent = "";
+    document.getElementById("btnConfirmarExcluirConta").disabled = false;
+    document.getElementById("btnConfirmarExcluirConta").focus();
+  },
+
+  ocultarConfirmacaoExclusao() {
+    document.getElementById("contaConfirmacaoExclusao").hidden = true;
+    document.getElementById("btnExcluirConta").hidden = false;
+    document.getElementById("contaStatus").textContent = "";
+    document.getElementById("btnConfirmarExcluirConta").disabled = false;
+  },
+
+  async confirmarExclusaoConta() {
+    const btnConfirmar = document.getElementById("btnConfirmarExcluirConta");
+    btnConfirmar.disabled = true;
+    document.getElementById("contaStatus").textContent = "Excluindo conta...";
+
+    try {
+      await window.Api.deleteAccount();
+      try { localStorage.removeItem(Model.getStorageKey()); } catch (_) { /* ignore */ }
+      document.getElementById("contaStatus").textContent = "";
+      this.fecharModalConta();
+      await window.TrackerAuth.logout();
+    } catch (error) {
+      btnConfirmar.disabled = false;
+      document.getElementById("contaStatus").textContent =
+        error.message || "Nao foi possivel excluir a conta. Tente novamente.";
     }
   },
 
@@ -279,8 +534,10 @@ const Controller = {
     }
   },
 
-  setAuthStatus(mensagem) {
-    document.getElementById("authStatus").textContent = mensagem || "";
+  setAuthStatus(mensagem, tipo = "") {
+    const el = document.getElementById("authStatus");
+    el.textContent = mensagem || "";
+    el.className = "auth-status" + (tipo ? ` is-${tipo}` : "");
   },
 
   formatarErroAutenticacao(error) {
@@ -289,12 +546,13 @@ const Controller = {
       "auth/email-already-in-use": "Este e-mail ja esta cadastrado.",
       "auth/invalid-email": "E-mail invalido.",
       "auth/invalid-credential": "E-mail ou senha incorretos.",
+      "auth/missing-email": "Informe o e-mail.",
       "auth/user-not-found": "Usuario nao encontrado.",
       "auth/wrong-password": "Senha incorreta.",
       "auth/weak-password": "Senha fraca. Use pelo menos 6 caracteres."
     };
 
-    return mensagens[codigo] || "Nao foi possivel autenticar.";
+    return mensagens[codigo] || (error && error.message) || "Nao foi possivel autenticar.";
   },
 
   registrarNavegacao() {
@@ -419,7 +677,8 @@ const Controller = {
       sexo: document.getElementById("tmbSexo").value,
       peso: lerValor("tmbPeso"),
       altura: lerValor("tmbAltura"),
-      idade: lerValor("tmbIdade")
+      idade: lerValor("tmbIdade"),
+      objetivo: document.getElementById("tmbObjetivo")?.value || "manter"
     };
   },
 
@@ -448,12 +707,12 @@ const Controller = {
     const valores = [carboidratos, proteinas, gorduras, calorias];
 
     if (!nome || valores.some(Number.isNaN) || valores.some((valor) => valor < 0)) {
-      alert("Preencha corretamente o alimento e informe valores num\u00e9ricos v\u00e1lidos.");
+      View.mostrarToast("Preencha o nome do alimento e informe valores num\u00e9ricos v\u00e1lidos.", "error");
       return;
     }
 
     if (this.getAlimentoPorNomeIndexado(nome)) {
-      alert("J\u00e1 existe um alimento cadastrado com esse nome.");
+      View.mostrarToast("J\u00e1 existe um alimento cadastrado com esse nome.", "error");
       return;
     }
 
@@ -758,7 +1017,7 @@ const Controller = {
     const alimentoBase = this.getAlimentoSelecionado();
 
     if (!alimentoBase || Number.isNaN(quantidade) || quantidade <= 0) {
-      alert("Selecione um alimento cadastrado e informe uma quantidade maior que zero.");
+      View.mostrarToast("Selecione um alimento e informe uma quantidade maior que zero.", "error");
       return;
     }
 
@@ -804,7 +1063,7 @@ const Controller = {
     const item = Model.getItemRefeicao(dataAtual, refeicaoId, index);
 
     if (!item) {
-      alert("Registro nao encontrado para edicao.");
+      View.mostrarToast("Registro não encontrado.", "error");
       return;
     }
 
@@ -849,7 +1108,7 @@ const Controller = {
     const refeicaoDestinoId = document.getElementById("editarTipoRefeicao").value || this.registroEdicaoAtual.refeicaoId;
 
     if (!alimentoBase || Number.isNaN(quantidade) || quantidade <= 0) {
-      alert("Selecione um alimento cadastrado e informe uma quantidade maior que zero.");
+      View.mostrarToast("Selecione um alimento e informe uma quantidade maior que zero.", "error");
       return;
     }
 
@@ -873,7 +1132,7 @@ const Controller = {
     );
 
     if (!sucesso) {
-      alert("Nao foi possivel atualizar esse registro.");
+      View.mostrarToast("Não foi possível atualizar esse registro.", "error");
       this.cancelarEdicaoRegistro();
       this.atualizarView();
       return;
@@ -889,24 +1148,25 @@ const Controller = {
     const valores = Object.values(metas);
 
     if (valores.some((valor) => Number.isNaN(valor) || valor < 0)) {
-      alert("Informe metas maiores ou iguais a zero.");
+      View.mostrarToast("Informe metas maiores ou iguais a zero.", "error");
       return;
     }
 
     Model.atualizarMetasDiarias(metas);
     this.atualizarView();
+    View.mostrarToast("Metas salvas com sucesso.", "success");
   },
 
   calcularTmb() {
     const perfil = this.getTmbDigitada();
 
     if (!perfil.sexo || perfil.peso <= 0 || perfil.altura <= 0 || perfil.idade <= 0) {
-      alert("Informe sexo, peso, altura e idade para calcular a TMB.");
+      View.mostrarToast("Informe sexo, peso, altura e idade para calcular a TMB.", "error");
       return;
     }
 
     if ([perfil.peso, perfil.altura, perfil.idade].some(Number.isNaN)) {
-      alert("Informe valores numericos validos para peso, altura e idade.");
+      View.mostrarToast("Informe valores numéricos válidos para peso, altura e idade.", "error");
       return;
     }
 
@@ -918,7 +1178,7 @@ const Controller = {
     const perfil = Model.getTmbPerfil();
 
     if (perfil.resultado <= 0) {
-      alert("Calcule a TMB antes de aplicar como meta.");
+      View.mostrarToast("Calcule a TMB antes de aplicar como meta calórica.", "error");
       return;
     }
 
@@ -927,6 +1187,28 @@ const Controller = {
       calorias: perfil.resultado
     });
     this.atualizarView();
+    View.mostrarToast(`Meta calórica definida: ${View.formatarNumero(perfil.resultado)} kcal/dia.`, "success");
+  },
+
+  usarMacrosComoMetas() {
+    const perfil = Model.getTmbPerfil();
+
+    if (perfil.resultado <= 0 || !perfil.macros) {
+      View.mostrarToast("Calcule a TMB antes de definir as metas.", "error");
+      return;
+    }
+
+    Model.atualizarMetasDiarias({
+      proteinas: perfil.macros.proteinas,
+      gorduras: perfil.macros.gorduras,
+      carboidratos: perfil.macros.carboidratos,
+      calorias: Math.round(perfil.resultado)
+    });
+    this.atualizarView();
+    View.mostrarToast(
+      `Metas definidas: ${Math.round(perfil.resultado)} kcal — ${perfil.macros.proteinas}g prot, ${perfil.macros.gorduras}g gord, ${perfil.macros.carboidratos}g carbs.`,
+      "success"
+    );
   },
 
   adicionarDataPontualRelatorio() {
@@ -934,7 +1216,7 @@ const Controller = {
     const data = input.value;
 
     if (!Model.isDataValida(data)) {
-      alert("Selecione uma data v\u00e1lida para o relat\u00f3rio.");
+      View.mostrarToast("Selecione uma data v\u00e1lida para o relat\u00f3rio.", "error");
       return;
     }
 
@@ -966,7 +1248,7 @@ const Controller = {
     const relatorio = this.gerarRelatorioAtual();
 
     if (!relatorio.totalDias) {
-      alert("Selecione ao menos um dia para exportar o relat\u00f3rio.");
+      View.mostrarToast("Selecione ao menos um dia para exportar o relat\u00f3rio.", "error");
       return;
     }
 
@@ -981,7 +1263,7 @@ const Controller = {
     const quantidadeItensAnterior = Model.getQuantidadeItensDia(dataAnterior);
 
     if (!quantidadeItensAnterior) {
-      alert("N\u00e3o h\u00e1 refei\u00e7\u00e3o anterior para repetir.");
+      View.mostrarToast("N\u00e3o h\u00e1 refei\u00e7\u00f5es registradas no dia anterior.", "error");
       return;
     }
 

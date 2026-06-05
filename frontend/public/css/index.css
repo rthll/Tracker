@@ -1083,6 +1083,94 @@ body {
   background: rgba(255, 255, 255, 0.88);
 }
 
+.bmr-objetivo {
+  grid-column: span 4;
+}
+
+.bmr-macros {
+  margin-top: 20px;
+  padding: 24px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bmr-macros-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bmr-macros-header h3 {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.bmr-macros-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.bmr-macros-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bmr-macro-card {
+  padding: 16px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
+  border-left: 3px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bmr-macro-card-proteinas { border-left-color: #1d6b57; }
+.bmr-macro-card-gorduras  { border-left-color: #d9822b; }
+.bmr-macro-card-carbs     { border-left-color: #3a7abf; }
+
+.bmr-macro-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.bmr-macro-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.bmr-macro-value span {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.bmr-macro-value small {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.bmr-macro-pct {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
 .report-layout {
   display: grid;
   grid-template-columns: minmax(260px, 0.34fr) minmax(0, 1fr);
@@ -2085,8 +2173,13 @@ body {
   text-align: left;
 }
 
-.bmr-actions {
+.bmr-actions,
+.bmr-objetivo {
   grid-column: span 1;
+}
+
+.bmr-macros-grid {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .report-title-block h2 {
@@ -2222,8 +2315,13 @@ body {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .bmr-actions {
+  .bmr-actions,
+  .bmr-objetivo {
     grid-column: span 2;
+  }
+
+  .bmr-macros-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .table {
@@ -2351,7 +2449,8 @@ body {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .bmr-actions {
+  .bmr-actions,
+  .bmr-objetivo {
     grid-column: span 4;
   }
 
@@ -2458,5 +2557,240 @@ body {
   .app-topbar,
   .report-controls {
     display: none !important;
+  }
+}
+
+/* ── Botão de conta no header ── */
+.user-account-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.user-account-btn:hover {
+  background: rgba(29, 107, 87, 0.08);
+  color: var(--primary-dark);
+  text-decoration: none;
+}
+
+/* ── Modal de conta ── */
+.conta-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(31, 41, 51, 0.5);
+  backdrop-filter: blur(5px);
+}
+
+.conta-modal-overlay[hidden] {
+  display: none;
+}
+
+.conta-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 460px;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-soft);
+}
+
+.conta-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.conta-modal-header h2 {
+  margin: 4px 0 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.conta-modal-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.conta-modal-close:hover {
+  background: rgba(199, 77, 72, 0.1);
+  color: var(--danger);
+}
+
+.conta-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--line);
+}
+
+.conta-info-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.conta-info-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.conta-danger-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(199, 77, 72, 0.22);
+  background: rgba(199, 77, 72, 0.04);
+}
+
+.conta-danger-title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--danger);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.conta-danger-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.conta-danger-confirm {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.conta-confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.conta-status {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: var(--danger);
+  min-height: 1.2em;
+}
+
+/* ── Auth link action ── */
+.auth-link-action {
+  min-height: auto;
+  padding: 6px 8px;
+  color: var(--primary);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-link-action:hover,
+.auth-link-action:focus {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* ── Auth status states ── */
+.auth-status.is-error {
+  color: var(--danger);
+}
+
+.auth-status.is-success {
+  color: var(--primary);
+}
+
+/* ── Toast notifications ── */
+.app-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  pointer-events: none;
+  max-width: min(380px, calc(100vw - 48px));
+}
+
+.app-toast {
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-soft);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-left: 3px solid var(--line);
+  line-height: 1.45;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.app-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.app-toast-error {
+  border-left-color: var(--danger);
+  color: var(--danger);
+}
+
+.app-toast-success {
+  border-left-color: var(--primary);
+}
+
+@media (max-width: 576px) {
+  .app-toast-container {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    max-width: none;
   }
 }

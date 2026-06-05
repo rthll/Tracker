@@ -1,16 +1,28 @@
 import admin from "firebase-admin";
+import { readFileSync } from "node:fs";
 import { env } from "./env.js";
 
-function getServiceAccountCredential() {
+function getServiceAccountFromBase64() {
   if (!env.firebaseServiceAccountBase64) {
     return null;
   }
 
-  const serviceAccount = JSON.parse(
+  return JSON.parse(
     Buffer.from(env.firebaseServiceAccountBase64, "base64").toString("utf8")
   );
+}
 
-  return admin.credential.cert(serviceAccount);
+function getServiceAccountFromFile() {
+  if (!env.googleApplicationCredentials) {
+    return null;
+  }
+
+  return JSON.parse(readFileSync(env.googleApplicationCredentials, "utf8"));
+}
+
+function getServiceAccountCredential() {
+  const serviceAccount = getServiceAccountFromBase64() || getServiceAccountFromFile();
+  return serviceAccount ? admin.credential.cert(serviceAccount) : null;
 }
 
 function initializeFirebaseAdmin() {

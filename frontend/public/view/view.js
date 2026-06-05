@@ -265,12 +265,18 @@ const View = {
       ["tmbIdade", perfil.idade]
     ];
     const sexo = document.getElementById("tmbSexo");
+    const objetivo = document.getElementById("tmbObjetivo");
     const resultado = document.getElementById("tmbResultado");
     const detalhe = document.getElementById("tmbDetalhe");
     const botaoUsarMeta = document.getElementById("btnUsarTmbMeta");
+    const macrosPanel = document.getElementById("tmbMacrosPanel");
 
     if (document.activeElement !== sexo) {
       sexo.value = perfil.sexo || "";
+    }
+
+    if (objetivo && document.activeElement !== objetivo) {
+      objetivo.value = perfil.objetivo || "manter";
     }
 
     campos.forEach(([id, valor]) => {
@@ -286,10 +292,25 @@ const View = {
 
     if (perfil.resultado <= 0) {
       detalhe.textContent = "Informe os dados para calcular.";
+      if (macrosPanel) macrosPanel.hidden = true;
       return;
     }
 
     detalhe.textContent = `Estimativa de repouso: ${this.formatarNumero(perfil.resultado)} kcal por dia.`;
+
+    if (macrosPanel && perfil.macros) {
+      const pcts = { manter: [20, 30, 50], perder: [30, 25, 45], ganhar: [25, 20, 55] };
+      const [pProt, pGord, pCarbs] = pcts[perfil.objetivo] || pcts.manter;
+
+      document.getElementById("tmbMacroProteinas").textContent = perfil.macros.proteinas;
+      document.getElementById("tmbMacroGorduras").textContent = perfil.macros.gorduras;
+      document.getElementById("tmbMacroCarbs").textContent = perfil.macros.carboidratos;
+      document.getElementById("tmbMacroProteinasPct").textContent = `${pProt}% das calorias`;
+      document.getElementById("tmbMacroGordurasPct").textContent = `${pGord}% das calorias`;
+      document.getElementById("tmbMacroCarbsPct").textContent = `${pCarbs}% das calorias`;
+
+      macrosPanel.hidden = false;
+    }
   },
 
   atualizarProgressoMetas(totais, metas) {
@@ -541,10 +562,10 @@ const View = {
       const itens = refeicoesPorDia[refeicao.id] || [];
 
       itens.forEach((item, index) => {
-        totais.carboidratos += item.carboidratos;
-        totais.proteinas += item.proteinas;
-        totais.gorduras += item.gorduras;
-        totais.calorias += item.calorias;
+        totais.carboidratos += Number(item.carboidratos) || 0;
+        totais.proteinas += Number(item.proteinas) || 0;
+        totais.gorduras += Number(item.gorduras) || 0;
+        totais.calorias += Number(item.calorias) || 0;
 
         const row = document.createElement("tr");
         const valores = [
@@ -934,10 +955,10 @@ const View = {
 
   calcularTotais(itens) {
     return itens.reduce((totais, item) => {
-      totais.carboidratos += item.carboidratos;
-      totais.proteinas += item.proteinas;
-      totais.gorduras += item.gorduras;
-      totais.calorias += item.calorias;
+      totais.carboidratos += Number(item.carboidratos) || 0;
+      totais.proteinas += Number(item.proteinas) || 0;
+      totais.gorduras += Number(item.gorduras) || 0;
+      totais.calorias += Number(item.calorias) || 0;
       return totais;
     }, {
       carboidratos: 0,
@@ -965,7 +986,8 @@ const View = {
   },
 
   formatarNumero(valor) {
-    return Number(valor).toFixed(2);
+    const num = Number(valor);
+    return (Number.isFinite(num) ? num : 0).toFixed(2);
   },
 
   formatarPercentual(valor) {
@@ -999,5 +1021,26 @@ const View = {
       hour: "2-digit",
       minute: "2-digit"
     }).format(new Date(dataIso));
+  },
+
+  mostrarToast(mensagem, tipo = "info") {
+    const container = document.getElementById("appToastContainer");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `app-toast app-toast-${tipo}`;
+    toast.setAttribute("role", tipo === "error" ? "alert" : "status");
+    toast.textContent = mensagem;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => toast.classList.add("is-visible"));
+    });
+
+    const duracao = tipo === "error" ? 5000 : 3500;
+    setTimeout(() => {
+      toast.classList.remove("is-visible");
+      setTimeout(() => toast.remove(), 280);
+    }, duracao);
   }
 };

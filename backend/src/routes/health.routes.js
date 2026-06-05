@@ -7,7 +7,7 @@ healthRouter.get("/health", (request, response) => {
   response.json({
     status: "ok",
     service: "tracker-backend",
-    firebaseAdminConfigured: env.hasFirebaseAdminCredentials,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    ...(env.isDevelopment && { firebaseAdminConfigured: env.hasFirebaseAdminCredentials })
   });
 });

@@ -44,8 +44,11 @@ export function createApp() {
 
   app.use((error, request, response, next) => {
     console.error(error);
-    response.status(error.statusCode || 500).json({
-      error: error.statusCode === 403 ? error.message : "Erro interno do servidor."
+    const statusCode = error.statusCode || 500;
+    response.status(statusCode).json({
+      error: statusCode >= 400 && statusCode < 500
+        ? error.message
+        : "Erro interno do servidor."
     });
   });
 

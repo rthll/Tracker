@@ -34,6 +34,8 @@ A interface usa navegacao interna por paginas para separar o fluxo diario das co
 - Edicao de registros ja lancados, com alteracao de alimento, quantidade e refeicao.
 - Botao para repetir as refeicoes do dia anterior.
 - Persistencia em Firestore por usuario autenticado, com fallback local em `localStorage`.
+- Cadastro com envio de codigo por e-mail antes da criacao da conta.
+- Redefinicao de senha por e-mail pelo Firebase Auth.
 - Selecao de uma data para organizar as refeicoes do dia.
 - Calculo proporcional dos nutrientes conforme a quantidade informada.
 - Tabela consolidada com totais de carboidratos, proteinas, gorduras e calorias.
@@ -44,6 +46,8 @@ A interface usa navegacao interna por paginas para separar o fluxo diario das co
 
 ```text
 Tracker/
+|-- api/
+|   `-- index.js
 |-- backend/
 |   |-- src/
 |   |   |-- config/
@@ -78,6 +82,7 @@ Tracker/
 |-- .gitignore
 |-- firebase.json
 |-- package.json
+|-- vercel.json
 `-- README.md
 ```
 
@@ -119,6 +124,59 @@ Responsabilidades atuais:
 - Frontend: interface, Firebase Auth, busca local TACO, estado visual e chamadas HTTP autenticadas para a API.
 - Backend: API propria da aplicacao, validacao de ID token Firebase, persistencia Firestore, health check, CORS e governanca de rotas server-side.
 
+## Deploy na Vercel
+
+O projeto esta preparado para deploy unico na Vercel:
+
+- `frontend/` e compilado pelo Vite e publicado como site estatico.
+- `api/index.js` expoe o backend Express como Vercel Function.
+- `vercel.json` instala dependencias de frontend/backend, roda o build do frontend e roteia `/api/*` para a Function.
+
+Configuracao esperada na Vercel:
+
+```text
+Framework Preset: Other
+Root Directory: ./
+Install Command: npm ci --prefix frontend && npm ci --prefix backend
+Build Command: npm run build
+Output Directory: frontend/dist
+```
+
+Variaveis de ambiente necessarias na Vercel:
+
+```env
+NODE_ENV=production
+FIREBASE_PROJECT_ID=trackermacro-5756a
+FIREBASE_SERVICE_ACCOUNT_BASE64=...
+FRONTEND_ORIGIN=https://seu-app.vercel.app
+VITE_TRACKER_API_BASE_URL=/api
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
+VITE_FIREBASE_MEASUREMENT_ID=...
+AUTH_CODE_SECRET=...
+AUTH_CODE_TTL_MINUTES=15
+SMTP_HOST=...
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=...
+SMTP_PASS=...
+MAIL_FROM=...
+```
+
+Nao envie o JSON da service account para o repositorio. Converta o conteudo da chave para base64 e cadastre apenas em `FIREBASE_SERVICE_ACCOUNT_BASE64` no painel da Vercel.
+
+O cadastro por codigo depende de SMTP em producao. Sem SMTP, o backend recusa o envio de codigo fora de `NODE_ENV=development`. Em desenvolvimento, quando SMTP nao esta configurado, o codigo aparece no log do backend e na resposta da API para facilitar testes locais.
+
+Depois do primeiro deploy, adicione o dominio gerado pela Vercel no Firebase Authentication:
+
+```text
+Firebase Console > Authentication > Settings > Authorized domains
+```
+
 ## Firebase
 
 O frontend esta integrado ao Firebase Web SDK para autenticacao. A persistencia Firestore e governada pelo backend via Firebase Admin SDK.
@@ -131,10 +189,12 @@ Servicos usados nesta etapa:
 
 Arquivos relevantes:
 
+- `api/index.js`: entrada serverless usada pela Vercel para expor o backend Express.
 - `frontend/src/firebase.js`: inicializacao do Firebase Auth e ponte de autenticacao para a API.
 - `frontend/src/api-config.js`: configuracao da URL da API backend no frontend.
 - `frontend/.env.example`: variaveis `VITE_FIREBASE_*` para deploy.
 - `backend/src/config/firebase-admin.js`: inicializacao do Firebase Admin SDK.
+- `backend/src/routes/auth.routes.js`: rotas publicas para solicitar codigo e concluir cadastro.
 - `backend/src/routes/tracker.routes.js`: rotas protegidas de persistencia do tracker.
 - `firebase/firestore.rules`: regras de seguranca por usuario.
 - `firebase/firestore.indexes.json`: indices do Firestore.
@@ -328,6 +388,8 @@ Os valores da TACO sao por 100g. Valores `Tr` e `NA` sao tratados como `0` na co
 - Edicao de itens lancados nas refeicoes.
 - Repeticao das refeicoes anteriores.
 - Persistencia em Firestore com escrita incremental por usuario.
+- Cadastro em duas etapas com codigo de confirmacao por e-mail.
+- Redefinicao de senha por e-mail.
 - Atualizacao visual da pagina com layout mais moderno, responsivo e mobile-first.
 - Correcao da inicializacao da data para respeitar o horario local.
 - Ajuste da organizacao do MVC, removendo duplicacao indevida da camada de visualizacao.

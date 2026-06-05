@@ -6,7 +6,7 @@ const Api = {
   },
 
   getBaseUrl() {
-    return window.TRACKER_API_BASE_URL || "http://127.0.0.1:3333/api";
+    return window.TRACKER_API_BASE_URL || "/api";
   },
 
   async request(path, options = {}) {
@@ -34,6 +34,20 @@ const Api = {
     return this.request("/health");
   },
 
+  requestSignupCode(email) {
+    return this.request("/auth/signup-code", {
+      method: "POST",
+      body: JSON.stringify({ email })
+    });
+  },
+
+  completeSignup(email, password, code) {
+    return this.request("/auth/complete-signup", {
+      method: "POST",
+      body: JSON.stringify({ email, password, code })
+    });
+  },
+
   getTrackerState() {
     return this.request("/tracker/state");
   },
@@ -49,6 +63,12 @@ const Api = {
     return this.request("/tracker/change", {
       method: "PATCH",
       body: JSON.stringify({ change, fullData })
+    });
+  },
+
+  deleteAccount() {
+    return this.request("/auth/account", {
+      method: "DELETE"
     });
   }
 };

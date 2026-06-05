@@ -1,5 +1,7 @@
 const Model = {
   storageKey: "trackerMacronutrientes:v1",
+  storageKeyBase: "trackerMacronutrientes:v1",
+  usuarioStorageId: null,
   alimentosTaco: [],
   alimentosPersonalizados: [],
   refeicoesPorData: {},
@@ -16,7 +18,9 @@ const Model = {
     peso: 0,
     altura: 0,
     idade: 0,
-    resultado: 0
+    objetivo: "manter",
+    resultado: 0,
+    macros: { proteinas: 0, gorduras: 0, carboidratos: 0 }
   },
   limiteHistorico: 8,
   tiposRefeicao: [
@@ -27,17 +31,32 @@ const Model = {
   ],
   refeicaoPadrao: "almoco",
 
-  init(dadosRemotos = null) {
+  init(dadosRemotos = null, usuarioId = null) {
+    this.definirUsuarioStorage(usuarioId);
     this.alimentosTaco = this.carregarAlimentosTaco();
     this.resetarDadosUsuario();
 
-    if (dadosRemotos) {
+    if (dadosRemotos !== null && dadosRemotos !== undefined) {
       this.carregarDados(dadosRemotos);
       this.salvarLocal();
       return;
     }
 
-    this.carregar();
+    if (!this.usuarioStorageId) {
+      this.carregar();
+    }
+  },
+
+  definirUsuarioStorage(usuarioId) {
+    this.usuarioStorageId = usuarioId ? String(usuarioId) : null;
+  },
+
+  getStorageKey() {
+    if (!this.usuarioStorageId) {
+      return this.storageKey;
+    }
+
+    return `${this.storageKeyBase}:user:${encodeURIComponent(this.usuarioStorageId)}`;
   },
 
   resetarDadosUsuario() {
@@ -56,7 +75,7 @@ const Model = {
 
     return window.TACO_ALIMENTOS.map((alimento) => this.normalizarAlimento({
       ...alimento,
-      id: alimento.id || `taco:${alimento.tacoId}`,
+      id: alimento.id || (alimento.tacoId ? `taco:${alimento.tacoId}` : this.criarId("taco")),
       personalizado: false,
       origem: "TACO"
     }));
@@ -64,7 +83,7 @@ const Model = {
 
   carregar() {
     try {
-      const dadosSalvos = window.localStorage.getItem(this.storageKey);
+      const dadosSalvos = window.localStorage.getItem(this.getStorageKey());
 
       if (!dadosSalvos) {
         return;
@@ -128,7 +147,7 @@ const Model = {
   salvarLocal(dados = this.getDadosPersistencia()) {
     try {
       window.localStorage.setItem(
-        this.storageKey,
+        this.getStorageKey(),
         JSON.stringify(dados)
       );
     } catch (error) {
@@ -146,18 +165,23 @@ const Model = {
   },
 
   normalizarTmbPerfil(perfil) {
-    const sexo = perfil && ["masculino", "feminino"].includes(perfil.sexo)
-      ? perfil.sexo
-      : "";
+    const objetivosValidos = ["manter", "perder", "ganhar"];
+    const sexo = perfil && ["masculino", "feminino"].includes(perfil.sexo) ? perfil.sexo : "";
+    const objetivo = perfil && objetivosValidos.includes(perfil.objetivo) ? perfil.objetivo : "manter";
     const perfilNormalizado = {
       sexo,
       peso: this.valorNumerico(perfil && perfil.peso),
       altura: this.valorNumerico(perfil && perfil.altura),
       idade: this.valorNumerico(perfil && perfil.idade),
-      resultado: 0
+      objetivo,
+      resultado: 0,
+      macros: { proteinas: 0, gorduras: 0, carboidratos: 0 }
     };
 
     perfilNormalizado.resultado = this.calcularTmb(perfilNormalizado);
+    if (perfilNormalizado.resultado > 0) {
+      perfilNormalizado.macros = this.calcularMacrosTmb(perfilNormalizado.resultado, perfilNormalizado.objetivo);
+    }
     return perfilNormalizado;
   },
 
@@ -168,6 +192,23 @@ const Model = {
 
     const ajusteSexo = perfil.sexo === "masculino" ? 5 : -161;
     return (10 * perfil.peso) + (6.25 * perfil.altura) - (5 * perfil.idade) + ajusteSexo;
+  },
+
+  getObjetivosMacros() {
+    return {
+      manter: { proteinas: 0.20, gorduras: 0.30, carboidratos: 0.50 },
+      perder: { proteinas: 0.30, gorduras: 0.25, carboidratos: 0.45 },
+      ganhar: { proteinas: 0.25, gorduras: 0.20, carboidratos: 0.55 }
+    };
+  },
+
+  calcularMacrosTmb(calorias, objetivo = "manter") {
+    const config = this.getObjetivosMacros()[objetivo] || this.getObjetivosMacros().manter;
+    return {
+      proteinas: Math.round((calorias * config.proteinas) / 4),
+      gorduras: Math.round((calorias * config.gorduras) / 9),
+      carboidratos: Math.round((calorias * config.carboidratos) / 4)
+    };
   },
 
   getTiposRefeicao() {

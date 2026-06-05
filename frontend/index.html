@@ -40,11 +40,19 @@
           <input type="password" id="authPassword" class="form-control" autocomplete="current-password" placeholder="M&iacute;nimo de 6 caracteres">
         </div>
 
+        <div class="field-group" id="authSignupCodeGroup" hidden>
+          <label for="authSignupCode" class="form-label">C&oacute;digo de cadastro</label>
+          <input type="text" id="authSignupCode" class="form-control" autocomplete="one-time-code" inputmode="numeric" maxlength="6" placeholder="6 d&iacute;gitos">
+          <p class="field-hint">Informe o c&oacute;digo de 6 d&iacute;gitos recebido por e-mail.</p>
+          <button class="btn btn-link auth-link-action" id="btnReenviarCodigo" type="button">N&atilde;o recebi o c&oacute;digo &mdash; reenviar</button>
+        </div>
+
         <p class="auth-status" id="authStatus" role="status"></p>
 
         <div class="auth-actions">
           <button class="btn btn-primary" id="btnLogin" type="button">Entrar</button>
           <button class="btn btn-outline-secondary" id="btnRegister" type="button">Criar conta</button>
+          <button class="btn btn-link auth-link-action" id="btnResetPassword" type="button">Esqueci minha senha</button>
         </div>
       </div>
     </section>
@@ -56,7 +64,7 @@
           <h1>Macronutrientes</h1>
         </div>
 
-        <nav class="app-nav" aria-label="Navegacao principal">
+        <nav class="app-nav" aria-label="Navegação principal">
           <button class="app-nav-button is-active" type="button" data-page-target="dashboard">Dashboard</button>
           <button class="app-nav-button" type="button" data-page-target="refeicoes">Refei&ccedil;&otilde;es</button>
           <button class="app-nav-button" type="button" data-page-target="alimentos">Alimentos</button>
@@ -73,7 +81,9 @@
         </div>
 
         <div class="user-panel">
-          <span id="usuarioLogado">Usuario</span>
+          <button class="btn btn-link user-account-btn" id="btnConta" type="button" aria-label="Minha conta">
+            <span id="usuarioLogado">Usuario</span>
+          </button>
           <button class="btn btn-outline-secondary" id="btnLogout" type="button">Sair</button>
         </div>
       </header>
@@ -545,6 +555,15 @@
                 <input type="number" id="tmbIdade" class="form-control" placeholder="Ex.: 30" min="1" step="1" inputmode="numeric">
               </div>
 
+              <div class="field-group bmr-objetivo">
+                <label for="tmbObjetivo" class="form-label">Objetivo</label>
+                <select id="tmbObjetivo" class="form-select">
+                  <option value="manter">Manter peso</option>
+                  <option value="perder">Perder gordura</option>
+                  <option value="ganhar">Ganhar massa muscular</option>
+                </select>
+              </div>
+
               <div class="field-group bmr-actions">
                 <button class="btn btn-primary w-100" id="btnCalcularTmb" type="button">Calcular TMB</button>
               </div>
@@ -554,12 +573,74 @@
               <span class="dashboard-label">TMB estimada</span>
               <div class="bmr-result-value"><span id="tmbResultado">0.00</span><small>kcal/dia</small></div>
               <p id="tmbDetalhe">Informe os dados para calcular.</p>
-              <button class="btn btn-outline-secondary btn-compact" id="btnUsarTmbMeta" type="button">Usar como meta de calorias</button>
+              <button class="btn btn-outline-secondary btn-compact" id="btnUsarTmbMeta" type="button">Usar como meta cal&oacute;rica</button>
             </article>
+          </div>
+
+          <div class="bmr-macros" id="tmbMacrosPanel" hidden>
+            <div class="bmr-macros-header">
+              <div>
+                <span class="panel-kicker">Estimativa</span>
+                <h3>Distribui&ccedil;&atilde;o de macronutrientes</h3>
+              </div>
+              <p class="bmr-macros-note">Percentuais baseados em diretrizes nutricionais internacionais (AMDR / ISSN).</p>
+            </div>
+            <div class="bmr-macros-grid">
+              <article class="bmr-macro-card bmr-macro-card-proteinas">
+                <span class="bmr-macro-label">Prote&iacute;nas</span>
+                <div class="bmr-macro-value"><span id="tmbMacroProteinas">0</span><small>g/dia</small></div>
+                <p class="bmr-macro-pct" id="tmbMacroProteinasPct">20% das calorias</p>
+              </article>
+              <article class="bmr-macro-card bmr-macro-card-gorduras">
+                <span class="bmr-macro-label">Gorduras</span>
+                <div class="bmr-macro-value"><span id="tmbMacroGorduras">0</span><small>g/dia</small></div>
+                <p class="bmr-macro-pct" id="tmbMacroGordurasPct">30% das calorias</p>
+              </article>
+              <article class="bmr-macro-card bmr-macro-card-carbs">
+                <span class="bmr-macro-label">Carboidratos</span>
+                <div class="bmr-macro-value"><span id="tmbMacroCarbs">0</span><small>g/dia</small></div>
+                <p class="bmr-macro-pct" id="tmbMacroCarbsPct">50% das calorias</p>
+              </article>
+            </div>
+            <button class="btn btn-accent w-100" id="btnUsarMacrosMeta" type="button">Usar calorias e macros como metas</button>
           </div>
         </section>
       </section>
     </section>
+
+    <div class="conta-modal-overlay" id="contaModalOverlay" hidden>
+      <div class="conta-modal" role="dialog" aria-modal="true" aria-labelledby="contaModalTitulo" tabindex="-1">
+        <div class="conta-modal-header">
+          <div>
+            <span class="panel-kicker">Perfil</span>
+            <h2 id="contaModalTitulo">Minha conta</h2>
+          </div>
+          <button class="conta-modal-close" id="btnFecharConta" type="button" aria-label="Fechar">&times;</button>
+        </div>
+
+        <div class="conta-info-block">
+          <span class="conta-info-label">E-mail</span>
+          <span class="conta-info-value" id="contaEmailExibido">—</span>
+        </div>
+
+        <div class="conta-danger-zone">
+          <p class="conta-danger-title">Zona de perigo</p>
+          <p class="conta-danger-desc">A exclus&atilde;o de conta &eacute; permanente e n&atilde;o pode ser desfeita. Todos os seus dados de refei&ccedil;&otilde;es, metas, alimentos personalizados e hist&oacute;rico ser&atilde;o removidos.</p>
+
+          <div id="contaConfirmacaoExclusao" hidden>
+            <p class="conta-danger-confirm">Voc&ecirc; tem certeza absoluta? Esta a&ccedil;&atilde;o &eacute; irrevers&iacute;vel.</p>
+            <p class="conta-status" id="contaStatus"></p>
+            <div class="conta-confirm-actions">
+              <button class="btn btn-danger" id="btnConfirmarExcluirConta" type="button">Sim, excluir minha conta</button>
+              <button class="btn btn-link" id="btnCancelarExclusao" type="button">Cancelar</button>
+            </div>
+          </div>
+
+          <button class="btn btn-outline-danger" id="btnExcluirConta" type="button">Excluir conta</button>
+        </div>
+      </div>
+    </div>
+    <div class="app-toast-container" id="appToastContainer" aria-live="polite" aria-atomic="false"></div>
   </main>
 </body>
 </html>
