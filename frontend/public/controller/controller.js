@@ -62,6 +62,51 @@ const Controller = {
       document.getElementById("btnUsarTmbMeta").addEventListener("click", () => {
         this.usarTmbComoMetaCalorica();
       });
+
+      // Bottom navigation (mobile)
+      const bottomNavItems = document.querySelectorAll(".bottom-nav-item[data-page-target]");
+      bottomNavItems.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-page-target");
+          this.navegarPara(target);
+        });
+      });
+
+      const bottomNavMaisItems = document.querySelectorAll(".bottom-nav-more-item[data-page-target]");
+      bottomNavMaisItems.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-page-target");
+          this._fecharBottomNavMais();
+          this.navegarPara(target);
+        });
+      });
+
+      document.getElementById("btnBottomNavMais")?.addEventListener("click", () => {
+        this._toggleBottomNavMais();
+      });
+
+      document.getElementById("bottomNavOverlay")?.addEventListener("click", () => {
+        this._fecharBottomNavMais();
+      });
+
+      document.getElementById("btnDataAnterior")?.addEventListener("click", () => {
+        this.navegarData(-1);
+      });
+
+      document.getElementById("btnDataProximo")?.addEventListener("click", () => {
+        this.navegarData(1);
+      });
+
+      document.getElementById("fabAdicionarAlimento")?.addEventListener("click", () => {
+        const precisaNavegar = this.paginaAtual !== "dashboard";
+        if (precisaNavegar) this.navegarPara("dashboard");
+        const focar = () => {
+          const campo = document.getElementById("buscaAlimento");
+          if (campo) { campo.focus(); campo.scrollIntoView({ behavior: "smooth", block: "center" }); }
+        };
+        precisaNavegar ? setTimeout(focar, 80) : focar();
+      });
+
       document.getElementById("tmbObjetivo")?.addEventListener("change", () => {
         const perfil = Model.getTmbPerfil();
         if (perfil.resultado > 0) this.calcularTmb();
@@ -584,6 +629,17 @@ const Controller = {
     if (atualizarHash && window.location) {
       window.location.hash = pagina;
     }
+
+    // Sync bottom nav active state
+    const bottomItems = document.querySelectorAll(".bottom-nav-item[data-page-target], .bottom-nav-more-item[data-page-target]");
+    bottomItems.forEach((item) => {
+      item.classList.toggle("is-active", item.getAttribute("data-page-target") === pagina);
+    });
+    // If navigating to alimentos or relatorios, mark "Mais" button as active
+    const maisBotao = document.getElementById("btnBottomNavMais");
+    if (maisBotao) {
+      maisBotao.classList.toggle("is-active", ["alimentos", "relatorios"].includes(pagina));
+    }
   },
 
   obterDataHojeLocal() {
@@ -603,6 +659,23 @@ const Controller = {
     const mesAnterior = String(dataLocal.getMonth() + 1).padStart(2, "0");
     const diaAnterior = String(dataLocal.getDate()).padStart(2, "0");
     return `${anoAnterior}-${mesAnterior}-${diaAnterior}`;
+  },
+
+  obterDataProxima(data) {
+    const [ano, mes, dia] = data.split("-").map(Number);
+    const dataLocal = new Date(ano, mes - 1, dia);
+    dataLocal.setDate(dataLocal.getDate() + 1);
+    return this.formatarDataLocal(dataLocal);
+  },
+
+  navegarData(delta) {
+    const input = document.getElementById("dataSelecionada");
+    if (!input) return;
+    const base = input.value || this.obterDataHojeLocal();
+    const novaData = delta < 0 ? this.obterDataAnterior(base) : this.obterDataProxima(base);
+    if (delta > 0 && novaData > this.obterDataHojeLocal()) return;
+    input.value = novaData;
+    input.dispatchEvent(new Event("change"));
   },
 
   formatarDataLocal(dataLocal) {
@@ -1288,6 +1361,22 @@ const Controller = {
   removerItem(refeicaoId, index) {
     Model.removerItem(this.getDataAtual(), refeicaoId, index);
     this.atualizarView();
+  },
+
+  _toggleBottomNavMais() {
+    const panel = document.getElementById("bottomNavMaisPanel");
+    const overlay = document.getElementById("bottomNavOverlay");
+    if (!panel) return;
+    const isHidden = panel.hidden;
+    panel.hidden = !isHidden;
+    if (overlay) overlay.hidden = !isHidden;
+  },
+
+  _fecharBottomNavMais() {
+    const panel = document.getElementById("bottomNavMaisPanel");
+    const overlay = document.getElementById("bottomNavOverlay");
+    if (panel) panel.hidden = true;
+    if (overlay) overlay.hidden = true;
   },
 
   atualizarView() {

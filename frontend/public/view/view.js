@@ -189,8 +189,8 @@ const View = {
   },
 
   atualizarAtalhosAlimentos(favoritos, historico) {
-    this.renderizarListaChips("listaFavoritos", favoritos, "Nenhum favorito ainda.");
-    this.renderizarListaChips("listaHistorico", historico, "Sem historico de uso.");
+    this.renderizarListaChips("listaFavoritos", favoritos, "Nenhum favorito ainda.", 5);
+    this.renderizarListaChips("listaHistorico", historico, "Sem historico de uso.", 5);
   },
 
   atualizarAlimentosPersonalizados(alimentosPersonalizados, totalTaco = 0) {
@@ -199,7 +199,7 @@ const View = {
     this.renderizarListaChips("listaPersonalizados", alimentosPersonalizados, "Nenhum alimento personalizado cadastrado.");
   },
 
-  renderizarListaChips(containerId, alimentos, mensagemVazia) {
+  renderizarListaChips(containerId, alimentos, mensagemVazia, limite = Infinity) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
 
@@ -211,13 +211,11 @@ const View = {
       return;
     }
 
-    alimentos.forEach((alimento) => {
+    const criarChip = (alimento) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "food-chip";
-      button.addEventListener("click", () => {
-        Controller.selecionarAlimento(alimento.id);
-      });
+      button.addEventListener("click", () => Controller.selecionarAlimento(alimento.id));
 
       const nome = document.createElement("span");
       nome.className = "food-chip-name";
@@ -229,8 +227,29 @@ const View = {
 
       button.appendChild(nome);
       button.appendChild(macros);
-      container.appendChild(button);
+      return button;
+    };
+
+    const temMais = alimentos.length > limite;
+    const extras = temMais ? alimentos.length - limite : 0;
+
+    alimentos.forEach((alimento, index) => {
+      const chip = criarChip(alimento);
+      if (index >= limite) chip.classList.add("chip-hidden");
+      container.appendChild(chip);
     });
+
+    if (temMais) {
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "chip-list-toggle";
+      toggle.textContent = `+ ${extras} mais`;
+      toggle.addEventListener("click", () => {
+        const expandido = container.classList.toggle("chip-list--expanded");
+        toggle.textContent = expandido ? "Ver menos" : `+ ${extras} mais`;
+      });
+      container.appendChild(toggle);
+    }
   },
 
   atualizarBotaoRepetir(quantidadeItensOntem) {
@@ -357,7 +376,7 @@ const View = {
 
       texto.textContent = `${this.formatarNumero(consumido)} / ${this.formatarNumero(meta)} ${configuracao.unidade}`;
       barra.style.width = `${percentualLimitado}%`;
-      barra.classList.toggle("progress-over", percentual > 100);
+      barra.classList.toggle("progress-over", percentual > 110);
 
       if (meta <= 0) {
         detalhe.textContent = "Meta n\u00e3o definida";
@@ -373,6 +392,37 @@ const View = {
     this.atualizarDashboardCalorias(totais, metas);
     this.atualizarDistribuicaoMacros(totais);
     this.atualizarGraficoMetaConsumido(totais, metas);
+    this.atualizarMacroRings(totais, metas);
+  },
+
+  atualizarMacroRings(totais, metas) {
+    const CIRCUNF = 175.93;
+    const aneis = [
+      { chave: "carboidratos", ringId: "ringCarboidratos", centroId: "totalCarboResumo",    metaId: "metaCarboRing",    unidade: "g"    },
+      { chave: "proteinas",    ringId: "ringProteinas",    centroId: "totalProteinaResumo", metaId: "metaProteinaRing", unidade: "g"    },
+      { chave: "gorduras",     ringId: "ringGorduras",     centroId: "totalGorduraResumo",  metaId: "metaGorduraRing",  unidade: "g"    },
+      { chave: "calorias",     ringId: "ringCalorias",     centroId: "totalCaloriasResumo", metaId: "metaCaloriasRing", unidade: "kcal" }
+    ];
+
+    aneis.forEach(({ chave, ringId, centroId, metaId, unidade }) => {
+      const consumido = totais[chave] || 0;
+      const meta = metas[chave] || 0;
+      const pct = meta > 0 ? Math.min(consumido / meta, 1) : 0;
+      const ring = document.getElementById(ringId);
+      const centroEl = document.getElementById(centroId);
+      const metaEl = document.getElementById(metaId);
+
+      if (ring) {
+        ring.style.strokeDashoffset = CIRCUNF * (1 - pct);
+        ring.classList.toggle("ring-over", meta > 0 && consumido > meta * 1.1);
+      }
+      if (centroEl) centroEl.textContent = this.formatarNumero(consumido);
+      if (metaEl) {
+        metaEl.textContent = meta > 0 ? `meta: ${this.formatarNumero(meta)} ${unidade}` : "sem meta";
+        metaEl.classList.toggle("ring-meta--over", meta > 0 && consumido > meta * 1.1);
+        metaEl.classList.toggle("ring-meta--done", meta > 0 && consumido >= meta);
+      }
+    });
   },
 
   atualizarDashboardCalorias(totais, metas) {
@@ -472,7 +522,7 @@ const View = {
       const consumedBar = document.createElement("span");
       consumedBar.className = `macro-chart-consumed ${item.classe}`;
       consumedBar.style.width = `${percentualConsumido}%`;
-      consumedBar.classList.toggle("macro-chart-over", meta > 0 && consumido > meta);
+      consumedBar.classList.toggle("macro-chart-over", meta > 0 && consumido > meta * 1.1);
 
       bars.appendChild(targetBar);
       bars.appendChild(consumedBar);
@@ -494,6 +544,37 @@ const View = {
     document.getElementById("dashboardAderenciaMedia").textContent = percentuaisComMeta.length
       ? `${this.formatarNumero(aderenciaMedia)}% de ader\u00eancia m\u00e9dia`
       : "Metas n\u00e3o definidas";
+
+    // Marcar linhas conclu\u00eddas e adicionar toggle
+    const panel = container.closest(".dashboard-chart-panel");
+    const linhas = container.querySelectorAll(".macro-chart-row");
+    let concluidas = 0;
+
+    linhas.forEach((row) => {
+      const pctEl = row.querySelector(".macro-chart-percent");
+      const pctTexto = pctEl ? parseFloat(pctEl.textContent) : 0;
+      const concluida = pctTexto >= 100;
+      row.classList.toggle("macro-chart-row--done", concluida);
+      if (concluida) concluidas++;
+    });
+
+    const toggleExistente = panel?.querySelector(".chart-done-toggle");
+    if (toggleExistente) toggleExistente.remove();
+
+    if (panel && concluidas > 0) {
+      const toggle = document.createElement("button");
+      toggle.className = "chart-done-toggle";
+      toggle.type = "button";
+      toggle.textContent = `Ver conclu\u00edas (${concluidas})`;
+      panel.classList.remove("show-done");
+      toggle.addEventListener("click", () => {
+        const aberto = panel.classList.toggle("show-done");
+        toggle.textContent = aberto
+          ? `Ocultar conclu\u00edas (${concluidas})`
+          : `Ver conclu\u00edas (${concluidas})`;
+      });
+      container.after(toggle);
+    }
   },
 
   atualizarResumoPorRefeicao(refeicoesPorDia, tiposRefeicao) {
@@ -531,70 +612,97 @@ const View = {
   },
 
   atualizarTabelaRefeicao(refeicoesPorDia, tiposRefeicao) {
-    const tbody = document.getElementById("tabelaRefeicao");
-    const totais = {
-      carboidratos: 0,
-      proteinas: 0,
-      gorduras: 0,
-      calorias: 0
-    };
-    const totalItens = tiposRefeicao.reduce((total, refeicao) => {
-      return total + (refeicoesPorDia[refeicao.id] || []).length;
-    }, 0);
+    const container = document.getElementById("refeicoesPorTipoContainer");
+    const totais = { carboidratos: 0, proteinas: 0, gorduras: 0, calorias: 0 };
+    const totalItens = tiposRefeicao.reduce((acc, r) => acc + (refeicoesPorDia[r.id] || []).length, 0);
 
-    tbody.innerHTML = "";
+    // Preserve open/closed state across re-renders
+    const abertas = new Set();
+    container.querySelectorAll("details.refeicao-card[data-id]").forEach((el) => {
+      if (el.open) abertas.add(el.dataset.id);
+    });
+    const primeiraRenderizacao = abertas.size === 0 && container.querySelectorAll("details.refeicao-card").length === 0;
+
+    container.innerHTML = "";
 
     if (!totalItens) {
-      const row = document.createElement("tr");
-      row.className = "empty-state";
-
-      const cell = document.createElement("td");
-      cell.colSpan = 8;
-      cell.textContent = "Nenhum alimento adicionado para esta data.";
-
-      row.appendChild(cell);
-      tbody.appendChild(row);
+      const vazio = document.createElement("div");
+      vazio.className = "refeicao-empty";
+      vazio.textContent = "Nenhum alimento adicionado para esta data.";
+      container.appendChild(vazio);
       this.atualizarTotais(totais);
       return totais;
     }
 
     tiposRefeicao.forEach((refeicao) => {
       const itens = refeicoesPorDia[refeicao.id] || [];
+      if (!itens.length) return;
 
-      itens.forEach((item, index) => {
+      const totalRefeicao = { carboidratos: 0, proteinas: 0, gorduras: 0, calorias: 0 };
+      itens.forEach((item) => {
+        totalRefeicao.carboidratos += Number(item.carboidratos) || 0;
+        totalRefeicao.proteinas += Number(item.proteinas) || 0;
+        totalRefeicao.gorduras += Number(item.gorduras) || 0;
+        totalRefeicao.calorias += Number(item.calorias) || 0;
         totais.carboidratos += Number(item.carboidratos) || 0;
         totais.proteinas += Number(item.proteinas) || 0;
         totais.gorduras += Number(item.gorduras) || 0;
         totais.calorias += Number(item.calorias) || 0;
-
-        const row = document.createElement("tr");
-        const valores = [
-          refeicao.nome,
-          item.nome,
-          `${this.formatarNumero(item.quantidade)} g`,
-          this.formatarNumero(item.carboidratos),
-          this.formatarNumero(item.proteinas),
-          this.formatarNumero(item.gorduras),
-          this.formatarNumero(item.calorias)
-        ];
-
-        valores.forEach((valor) => {
-          const cell = document.createElement("td");
-          cell.textContent = valor;
-          row.appendChild(cell);
-        });
-
-        const actionCell = document.createElement("td");
-        actionCell.className = "actions-cell";
-        const actionWrapper = document.createElement("div");
-        actionWrapper.className = "actions-cell-inner";
-        actionWrapper.appendChild(this.criarBotaoEditar(refeicao.id, index, item.nome));
-        actionWrapper.appendChild(this.criarSelectMover(refeicao.id, index, tiposRefeicao));
-        actionWrapper.appendChild(this.criarBotaoRemover(refeicao.id, index, item.nome));
-        actionCell.appendChild(actionWrapper);
-        row.appendChild(actionCell);
-        tbody.appendChild(row);
       });
+
+      const details = document.createElement("details");
+      details.className = "refeicao-card";
+      details.dataset.id = refeicao.id;
+      details.open = primeiraRenderizacao || abertas.has(refeicao.id);
+
+      const summary = document.createElement("summary");
+      summary.className = "refeicao-card-header";
+      summary.innerHTML = `
+        <div class="refeicao-card-title">
+          <span class="refeicao-card-name">${refeicao.nome}</span>
+          <span class="refeicao-card-count">${itens.length} ${itens.length === 1 ? "item" : "itens"}</span>
+        </div>
+        <div class="refeicao-card-meta">
+          <span class="refeicao-card-kcal">${this.formatarNumero(totalRefeicao.calorias)} kcal</span>
+          <svg class="refeicao-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      `;
+
+      const body = document.createElement("div");
+      body.className = "refeicao-card-body";
+
+      itens.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "refeicao-item";
+
+        const info = document.createElement("div");
+        info.className = "refeicao-item-info";
+        info.innerHTML = `<span class="refeicao-item-name">${item.nome}</span><span class="refeicao-item-qty">${this.formatarNumero(item.quantidade)}g</span>`;
+
+        const macros = document.createElement("div");
+        macros.className = "refeicao-item-macros";
+        macros.innerHTML = `
+          <span class="rmacro rmacro-c">C ${this.formatarNumero(item.carboidratos)}g</span>
+          <span class="rmacro rmacro-p">P ${this.formatarNumero(item.proteinas)}g</span>
+          <span class="rmacro rmacro-g">G ${this.formatarNumero(item.gorduras)}g</span>
+          <span class="rmacro rmacro-cal">${this.formatarNumero(item.calorias)} kcal</span>
+        `;
+
+        const actions = document.createElement("div");
+        actions.className = "refeicao-item-actions";
+        actions.appendChild(this.criarBotaoEditar(refeicao.id, index, item.nome));
+        actions.appendChild(this.criarSelectMover(refeicao.id, index, tiposRefeicao));
+        actions.appendChild(this.criarBotaoRemover(refeicao.id, index, item.nome));
+
+        row.appendChild(info);
+        row.appendChild(macros);
+        row.appendChild(actions);
+        body.appendChild(row);
+      });
+
+      details.appendChild(summary);
+      details.appendChild(body);
+      container.appendChild(details);
     });
 
     this.atualizarTotais(totais);
@@ -987,7 +1095,7 @@ const View = {
 
   formatarNumero(valor) {
     const num = Number(valor);
-    return (Number.isFinite(num) ? num : 0).toFixed(2);
+    return String(Math.round(Number.isFinite(num) ? num : 0));
   },
 
   formatarPercentual(valor) {

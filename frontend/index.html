@@ -77,7 +77,15 @@
           <p class="date-panel-label">Dia selecionado</p>
           <p class="date-panel-value" id="resumoData">Hoje</p>
           <label for="dataSelecionada" class="form-label">Selecionar data</label>
-          <input type="date" id="dataSelecionada" class="form-control" aria-describedby="resumoData">
+          <div class="date-nav-row">
+            <button class="btn-date-nav" id="btnDataAnterior" type="button" aria-label="Dia anterior">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <input type="date" id="dataSelecionada" class="form-control" aria-describedby="resumoData">
+            <button class="btn-date-nav" id="btnDataProximo" type="button" aria-label="Pr&oacute;ximo dia">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
         </div>
 
         <div class="user-panel">
@@ -87,6 +95,46 @@
           <button class="btn btn-outline-secondary" id="btnLogout" type="button">Sair</button>
         </div>
       </header>
+
+      <!-- Mobile bottom navigation -->
+      <div class="bottom-nav-more-overlay" id="bottomNavOverlay" hidden></div>
+      <nav class="bottom-nav-more-panel" id="bottomNavMaisPanel" hidden>
+        <button class="bottom-nav-more-item" type="button" data-page-target="alimentos" id="bottomNavAlimentos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Alimentos
+        </button>
+        <button class="bottom-nav-more-item" type="button" data-page-target="relatorios" id="bottomNavRelatorios">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Relatórios
+        </button>
+      </nav>
+      <nav class="mobile-bottom-nav" aria-label="Navegação principal">
+        <button class="bottom-nav-item is-active" type="button" data-page-target="dashboard" id="bottomNavDashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="bottom-nav-item" type="button" data-page-target="refeicoes" id="bottomNavRefeicoes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
+          <span>Refei&ccedil;&otilde;es</span>
+        </button>
+        <button class="bottom-nav-item" type="button" data-page-target="metas" id="bottomNavMetas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          <span>Metas</span>
+        </button>
+        <button class="bottom-nav-item" type="button" data-page-target="calculadora" id="bottomNavCalculadora">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10" stroke-width="3"/><line x1="12" y1="10" x2="12" y2="10" stroke-width="3"/><line x1="16" y1="10" x2="16" y2="10" stroke-width="3"/><line x1="8" y1="14" x2="8" y2="14" stroke-width="3"/><line x1="12" y1="14" x2="12" y2="14" stroke-width="3"/><line x1="16" y1="14" x2="16" y2="14" stroke-width="3"/><line x1="8" y1="18" x2="12" y2="18"/><line x1="16" y1="18" x2="16" y2="18" stroke-width="3"/></svg>
+          <span>Calc.</span>
+        </button>
+        <button class="bottom-nav-item" type="button" id="btnBottomNavMais">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Mais</span>
+        </button>
+      </nav>
+
+      <!-- FAB: adicionar alimento rapidamente (mobile) -->
+      <button class="fab-add" id="fabAdicionarAlimento" type="button" aria-label="Adicionar alimento">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
 
       <section class="page-view is-active" id="page-dashboard" data-page="dashboard">
         <div class="page-heading">
@@ -153,25 +201,53 @@
           </article>
 
           <div class="dashboard-stack">
-            <section class="summary-grid" aria-label="Resumo nutricional do dia">
-              <article class="summary-card">
-                <span class="summary-label">Carboidratos</span>
-                <div class="summary-value"><span id="totalCarboResumo">0.00</span><small>g</small></div>
+            <section class="macro-ring-grid" aria-label="Resumo nutricional do dia">
+              <article class="macro-ring-card">
+                <div class="macro-ring-wrap">
+                  <svg class="macro-ring-svg" viewBox="0 0 72 72" aria-hidden="true">
+                    <circle class="macro-ring-track" cx="36" cy="36" r="28"/>
+                    <circle class="macro-ring-fill ring-carbs" id="ringCarboidratos" cx="36" cy="36" r="28"/>
+                  </svg>
+                  <div class="macro-ring-center"><span id="totalCarboResumo">0</span><small>g</small></div>
+                </div>
+                <span class="macro-ring-label">Carboidratos</span>
+                <span class="macro-ring-meta" id="metaCarboRing">sem meta</span>
               </article>
 
-              <article class="summary-card">
-                <span class="summary-label">Prote&iacute;nas</span>
-                <div class="summary-value"><span id="totalProteinaResumo">0.00</span><small>g</small></div>
+              <article class="macro-ring-card">
+                <div class="macro-ring-wrap">
+                  <svg class="macro-ring-svg" viewBox="0 0 72 72" aria-hidden="true">
+                    <circle class="macro-ring-track" cx="36" cy="36" r="28"/>
+                    <circle class="macro-ring-fill ring-protein" id="ringProteinas" cx="36" cy="36" r="28"/>
+                  </svg>
+                  <div class="macro-ring-center"><span id="totalProteinaResumo">0</span><small>g</small></div>
+                </div>
+                <span class="macro-ring-label">Prote&iacute;nas</span>
+                <span class="macro-ring-meta" id="metaProteinaRing">sem meta</span>
               </article>
 
-              <article class="summary-card">
-                <span class="summary-label">Gorduras</span>
-                <div class="summary-value"><span id="totalGorduraResumo">0.00</span><small>g</small></div>
+              <article class="macro-ring-card">
+                <div class="macro-ring-wrap">
+                  <svg class="macro-ring-svg" viewBox="0 0 72 72" aria-hidden="true">
+                    <circle class="macro-ring-track" cx="36" cy="36" r="28"/>
+                    <circle class="macro-ring-fill ring-fat" id="ringGorduras" cx="36" cy="36" r="28"/>
+                  </svg>
+                  <div class="macro-ring-center"><span id="totalGorduraResumo">0</span><small>g</small></div>
+                </div>
+                <span class="macro-ring-label">Gorduras</span>
+                <span class="macro-ring-meta" id="metaGorduraRing">sem meta</span>
               </article>
 
-              <article class="summary-card summary-card-highlight">
-                <span class="summary-label">Calorias</span>
-                <div class="summary-value"><span id="totalCaloriasResumo">0.00</span><small>kcal</small></div>
+              <article class="macro-ring-card macro-ring-card--calories">
+                <div class="macro-ring-wrap">
+                  <svg class="macro-ring-svg" viewBox="0 0 72 72" aria-hidden="true">
+                    <circle class="macro-ring-track" cx="36" cy="36" r="28"/>
+                    <circle class="macro-ring-fill ring-calories" id="ringCalorias" cx="36" cy="36" r="28"/>
+                  </svg>
+                  <div class="macro-ring-center"><span id="totalCaloriasResumo">0</span><small>kcal</small></div>
+                </div>
+                <span class="macro-ring-label">Calorias</span>
+                <span class="macro-ring-meta" id="metaCaloriasRing">sem meta</span>
               </article>
             </section>
 
@@ -269,7 +345,7 @@
           </div>
         </section>
 
-        <section class="panel panel-table">
+        <section class="panel">
           <div class="panel-heading panel-heading-table">
             <div>
               <span class="panel-kicker">Acompanhamento</span>
@@ -278,32 +354,18 @@
             <p>Itens adicionados, totais nutricionais e movimenta&ccedil;&atilde;o entre refei&ccedil;&otilde;es.</p>
           </div>
 
-          <div class="table-responsive">
-            <table class="table align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>Refei&ccedil;&atilde;o</th>
-                  <th>Alimento</th>
-                  <th>Qtd</th>
-                  <th>Carbs</th>
-                  <th>Prot</th>
-                  <th>Gord</th>
-                  <th>Cal</th>
-                  <th class="text-center">A&ccedil;&atilde;o</th>
-                </tr>
-              </thead>
-              <tbody id="tabelaRefeicao"></tbody>
-              <tfoot>
-                <tr>
-                  <th colspan="3">Total</th>
-                  <th id="totalCarbo">0.00</th>
-                  <th id="totalProteina">0.00</th>
-                  <th id="totalGordura">0.00</th>
-                  <th id="totalCalorias">0.00</th>
-                  <th></th>
-                </tr>
-              </tfoot>
-            </table>
+          <div id="refeicoesPorTipoContainer">
+            <!-- gerado por view.js -->
+          </div>
+
+          <div class="refeicao-total-bar" id="refeicaoTotalBar">
+            <span class="refeicao-total-label">Total do dia</span>
+            <div class="refeicao-total-macros">
+              <span>C <strong id="totalCarbo">0.00</strong>g</span>
+              <span>P <strong id="totalProteina">0.00</strong>g</span>
+              <span>G <strong id="totalGordura">0.00</strong>g</span>
+              <span class="refeicao-total-cal"><strong id="totalCalorias">0.00</strong>&nbsp;kcal</span>
+            </div>
           </div>
         </section>
       </section>
