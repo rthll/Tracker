@@ -230,8 +230,6 @@ FIREBASE_PROJECT_ID=trackermacro-5756a
 FIREBASE_SERVICE_ACCOUNT_BASE64=...
 ```
 
-Nao salve service account no repositorio. Use uma chave nova se alguma chave anterior foi exposta.
-
 A persistencia usa escrita incremental:
 
 - metas atualizam apenas `goals/current`;
