@@ -35,12 +35,22 @@ function getAllowedOrigins(value) {
     "http://127.0.0.1:4173",
     "http://localhost:4173"
   ];
+
+  // Vercel injeta essas vars em cada deploy (preview e produção)
+  const vercelOrigins = [
+    process.env.VERCEL_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_BRANCH_URL
+  ]
+    .filter(Boolean)
+    .map((url) => `https://${url}`);
+
   const configuredOrigins = String(value || "")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  return [...new Set([...defaultOrigins, ...configuredOrigins])];
+  return [...new Set([...defaultOrigins, ...vercelOrigins, ...configuredOrigins])];
 }
 
 export const env = {
