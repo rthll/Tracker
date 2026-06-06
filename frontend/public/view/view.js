@@ -19,8 +19,9 @@ const View = {
   },
 
   atualizarSelectRefeicoes(tiposRefeicao) {
-    this.preencherSelectRefeicoes("tipoRefeicao", tiposRefeicao, "almoco");
-    this.preencherSelectRefeicoes("editarTipoRefeicao", tiposRefeicao, "almoco");
+    const fallback = tiposRefeicao[0]?.id || "almoco";
+    this.preencherSelectRefeicoes("tipoRefeicao", tiposRefeicao, fallback);
+    this.preencherSelectRefeicoes("editarTipoRefeicao", tiposRefeicao, fallback);
   },
 
   preencherSelectRefeicoes(selectId, tiposRefeicao, valorFallback) {
@@ -84,7 +85,11 @@ const View = {
   },
 
   renderizarPainelBuscaAlimentos(contexto, secoes) {
-    const painelId = contexto === "edicao" ? "painelBuscaEdicaoAlimentos" : "painelBuscaAlimentos";
+    const painelId = contexto === "edicao"
+      ? "painelBuscaEdicaoAlimentos"
+      : contexto === "template"
+        ? "painelBuscaNovaRefeicaoAlimentos"
+        : "painelBuscaAlimentos";
     const painel = document.getElementById(painelId);
 
     if (!painel) {
@@ -156,7 +161,7 @@ const View = {
   },
 
   ocultarPaineisBuscaAlimentos() {
-    ["painelBuscaAlimentos", "painelBuscaEdicaoAlimentos"].forEach((id) => {
+    ["painelBuscaAlimentos", "painelBuscaEdicaoAlimentos", "painelBuscaNovaRefeicaoAlimentos"].forEach((id) => {
       const painel = document.getElementById(id);
       if (painel) {
         painel.hidden = true;
@@ -625,18 +630,18 @@ const View = {
 
     container.innerHTML = "";
 
-    if (!totalItens) {
+    if (!tiposRefeicao.length) {
       const vazio = document.createElement("div");
       vazio.className = "refeicao-empty";
-      vazio.textContent = "Nenhum alimento adicionado para esta data.";
+      vazio.textContent = "Nenhuma refeição cadastrada. Clique em \"+ Nova refeição\" para começar.";
       container.appendChild(vazio);
+      this.atualizarBtnAdicionarRefeicao(container);
       this.atualizarTotais(totais);
       return totais;
     }
 
     tiposRefeicao.forEach((refeicao) => {
       const itens = refeicoesPorDia[refeicao.id] || [];
-      if (!itens.length) return;
 
       const totalRefeicao = { carboidratos: 0, proteinas: 0, gorduras: 0, calorias: 0 };
       itens.forEach((item) => {
@@ -657,56 +662,101 @@ const View = {
 
       const summary = document.createElement("summary");
       summary.className = "refeicao-card-header";
-      summary.innerHTML = `
-        <div class="refeicao-card-title">
-          <span class="refeicao-card-name">${refeicao.nome}</span>
-          <span class="refeicao-card-count">${itens.length} ${itens.length === 1 ? "item" : "itens"}</span>
-        </div>
-        <div class="refeicao-card-meta">
-          <span class="refeicao-card-kcal">${this.formatarNumero(totalRefeicao.calorias)} kcal</span>
-          <svg class="refeicao-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
+
+      const cardTitle = document.createElement("div");
+      cardTitle.className = "refeicao-card-title";
+      cardTitle.innerHTML = `
+        <span class="refeicao-card-name">${refeicao.nome}</span>
+        <span class="refeicao-card-count">${itens.length} ${itens.length === 1 ? "item" : "itens"}</span>
       `;
+
+      const cardMeta = document.createElement("div");
+      cardMeta.className = "refeicao-card-meta";
+      cardMeta.innerHTML = `
+        <span class="refeicao-card-kcal">${this.formatarNumero(totalRefeicao.calorias)} kcal</span>
+        <svg class="refeicao-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      `;
+
+      const btnDeletar = document.createElement("button");
+      btnDeletar.type = "button";
+      btnDeletar.className = "refeicao-card-delete";
+      btnDeletar.setAttribute("aria-label", `Excluir refeição ${refeicao.nome}`);
+      btnDeletar.innerHTML = "&times;";
+      btnDeletar.addEventListener("click", (e) => {
+        e.stopPropagation();
+        Controller.removerTipoRefeicao(refeicao.id);
+      });
+      cardMeta.appendChild(btnDeletar);
+
+      summary.appendChild(cardTitle);
+      summary.appendChild(cardMeta);
 
       const body = document.createElement("div");
       body.className = "refeicao-card-body";
 
-      itens.forEach((item, index) => {
-        const row = document.createElement("div");
-        row.className = "refeicao-item";
+      if (!itens.length) {
+        const vazio = document.createElement("p");
+        vazio.className = "refeicao-item-vazio";
+        vazio.textContent = "Nenhum alimento adicionado.";
+        body.appendChild(vazio);
+      } else {
+        itens.forEach((item, index) => {
+          const row = document.createElement("div");
+          row.className = "refeicao-item";
 
-        const info = document.createElement("div");
-        info.className = "refeicao-item-info";
-        info.innerHTML = `<span class="refeicao-item-name">${item.nome}</span><span class="refeicao-item-qty">${this.formatarNumero(item.quantidade)}g</span>`;
+          const info = document.createElement("div");
+          info.className = "refeicao-item-info";
+          info.innerHTML = `<span class="refeicao-item-name">${item.nome}</span><span class="refeicao-item-qty">${this.formatarNumero(item.quantidade)}g</span>`;
 
-        const macros = document.createElement("div");
-        macros.className = "refeicao-item-macros";
-        macros.innerHTML = `
-          <span class="rmacro rmacro-c">C ${this.formatarNumero(item.carboidratos)}g</span>
-          <span class="rmacro rmacro-p">P ${this.formatarNumero(item.proteinas)}g</span>
-          <span class="rmacro rmacro-g">G ${this.formatarNumero(item.gorduras)}g</span>
-          <span class="rmacro rmacro-cal">${this.formatarNumero(item.calorias)} kcal</span>
-        `;
+          const macros = document.createElement("div");
+          macros.className = "refeicao-item-macros";
+          macros.innerHTML = `
+            <span class="rmacro rmacro-c">C ${this.formatarNumero(item.carboidratos)}g</span>
+            <span class="rmacro rmacro-p">P ${this.formatarNumero(item.proteinas)}g</span>
+            <span class="rmacro rmacro-g">G ${this.formatarNumero(item.gorduras)}g</span>
+            <span class="rmacro rmacro-cal">${this.formatarNumero(item.calorias)} kcal</span>
+          `;
 
-        const actions = document.createElement("div");
-        actions.className = "refeicao-item-actions";
-        actions.appendChild(this.criarBotaoEditar(refeicao.id, index, item.nome));
-        actions.appendChild(this.criarSelectMover(refeicao.id, index, tiposRefeicao));
-        actions.appendChild(this.criarBotaoRemover(refeicao.id, index, item.nome));
+          const actions = document.createElement("div");
+          actions.className = "refeicao-item-actions";
+          actions.appendChild(this.criarBotaoEditar(refeicao.id, index, item.nome));
+          actions.appendChild(this.criarSelectMover(refeicao.id, index, tiposRefeicao));
+          actions.appendChild(this.criarBotaoRemover(refeicao.id, index, item.nome));
 
-        row.appendChild(info);
-        row.appendChild(macros);
-        row.appendChild(actions);
-        body.appendChild(row);
-      });
+          row.appendChild(info);
+          row.appendChild(macros);
+          row.appendChild(actions);
+          body.appendChild(row);
+        });
+
+        const footer = document.createElement("div");
+        footer.className = "refeicao-card-footer";
+        const btnTemplate = document.createElement("button");
+        btnTemplate.type = "button";
+        btnTemplate.className = "btn-salvar-template";
+        btnTemplate.textContent = "Salvar como refeição completa";
+        btnTemplate.addEventListener("click", () => Controller.iniciarSalvarTemplate(refeicao.id));
+        footer.appendChild(btnTemplate);
+        body.appendChild(footer);
+      }
 
       details.appendChild(summary);
       details.appendChild(body);
       container.appendChild(details);
     });
 
+    this.atualizarBtnAdicionarRefeicao(container);
     this.atualizarTotais(totais);
     return totais;
+  },
+
+  atualizarBtnAdicionarRefeicao(container) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn-add-refeicao";
+    btn.textContent = "+ Nova refeição";
+    btn.addEventListener("click", () => Controller.adicionarTipoRefeicao());
+    container.appendChild(btn);
   },
 
   criarSelectMover(refeicaoOrigemId, index, tiposRefeicao) {
@@ -1150,5 +1200,107 @@ const View = {
       toast.classList.remove("is-visible");
       setTimeout(() => toast.remove(), 280);
     }, duracao);
+  },
+
+  renderizarSelecaoTemplates(templates, tiposRefeicao) {
+    const container = document.getElementById("listaRefeicaoCompleta");
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (!templates.length) {
+      const empty = document.createElement("p");
+      empty.className = "template-selection-empty";
+      empty.textContent = "Nenhuma refeição completa salva ainda. Use o botão abaixo para criar a sua primeira.";
+      container.appendChild(empty);
+      return;
+    }
+
+    templates.forEach((template) => {
+      const totalCal = (template.itens || []).reduce((acc, i) => acc + (Number(i.calorias) || 0), 0);
+      const qtd = (template.itens || []).length;
+
+      const card = document.createElement("div");
+      card.className = "template-card";
+
+      const info = document.createElement("div");
+      info.className = "template-card-info";
+      info.innerHTML = `
+        <span class="template-card-nome">${template.nome}</span>
+        <span class="template-card-meta">${qtd} ${qtd === 1 ? "item" : "itens"} &middot; ${this.formatarNumero(totalCal)} kcal</span>
+      `;
+
+      const actions = document.createElement("div");
+      actions.className = "template-card-actions";
+
+      const select = document.createElement("select");
+      select.className = "form-select template-meal-select";
+      select.setAttribute("aria-label", `Refeição para ${template.nome}`);
+      tiposRefeicao.forEach((r) => {
+        const opt = document.createElement("option");
+        opt.value = r.id;
+        opt.textContent = r.nome;
+        if (r.id === template.refeicaoId) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      const btnAplicar = document.createElement("button");
+      btnAplicar.type = "button";
+      btnAplicar.className = "btn-template-aplicar";
+      btnAplicar.textContent = "Adicionar";
+      btnAplicar.addEventListener("click", () => Controller.aplicarTemplateComTipo(template.id, select.value));
+
+      const btnExcluir = document.createElement("button");
+      btnExcluir.type = "button";
+      btnExcluir.className = "btn-template-excluir";
+      btnExcluir.setAttribute("aria-label", `Excluir ${template.nome}`);
+      btnExcluir.innerHTML = "&times;";
+      btnExcluir.addEventListener("click", () => Controller.excluirTemplate(template.id));
+
+      actions.appendChild(select);
+      actions.appendChild(btnAplicar);
+      actions.appendChild(btnExcluir);
+      card.appendChild(info);
+      card.appendChild(actions);
+      container.appendChild(card);
+    });
+  },
+
+  renderizarItensTemplate(itens) {
+    const container = document.getElementById("listaItensNovaRefeicao");
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (!itens.length) {
+      const empty = document.createElement("p");
+      empty.className = "nova-refeicao-empty";
+      empty.textContent = "Nenhum item adicionado ainda.";
+      container.appendChild(empty);
+      return;
+    }
+
+    itens.forEach((item, index) => {
+      const row = document.createElement("div");
+      row.className = "nova-refeicao-item";
+
+      const nome = document.createElement("span");
+      nome.className = "nova-refeicao-item-nome";
+      nome.textContent = item.nome;
+
+      const qty = document.createElement("span");
+      qty.className = "nova-refeicao-item-qty";
+      qty.textContent = `${this.formatarNumero(item.quantidade)}g · ${this.formatarNumero(item.calorias)} kcal`;
+
+      const btnRemover = document.createElement("button");
+      btnRemover.type = "button";
+      btnRemover.className = "nova-refeicao-item-remove";
+      btnRemover.innerHTML = "&times;";
+      btnRemover.setAttribute("aria-label", `Remover ${item.nome}`);
+      btnRemover.addEventListener("click", () => Controller.removerItemDoTemplate(index));
+
+      row.appendChild(nome);
+      row.appendChild(qty);
+      row.appendChild(btnRemover);
+      container.appendChild(row);
+    });
   }
 };

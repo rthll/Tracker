@@ -12,6 +12,10 @@ function getCustomFoodsRef(userId) {
   return db.collection(`users/${userId}/customFoods`);
 }
 
+function getTemplatesRef(userId) {
+  return db.collection(`users/${userId}/templates`);
+}
+
 function getDaysRef(userId) {
   return db.collection(`users/${userId}/days`);
 }
@@ -140,12 +144,13 @@ async function loadLegacyState(userId) {
 }
 
 async function loadStructuredState(userId) {
-  const [userSnapshot, goalsSnapshot, bmrSnapshot, customFoodsSnapshot, daysSnapshot] = await Promise.all([
+  const [userSnapshot, goalsSnapshot, bmrSnapshot, customFoodsSnapshot, daysSnapshot, templatesSnapshot] = await Promise.all([
     getUserRef(userId).get(),
     getGoalsRef(userId).get(),
     getBmrRef(userId).get(),
     getCustomFoodsRef(userId).get(),
-    getDaysRef(userId).get()
+    getDaysRef(userId).get(),
+    getTemplatesRef(userId).get()
   ]);
 
   const refeicoesPorData = {};
@@ -183,7 +188,8 @@ async function loadStructuredState(userId) {
     || bmrSnapshot.exists
     || customFoodsSnapshot.size > 0
     || daysSnapshot.size > 0
-    || userSnapshot.exists;
+    || userSnapshot.exists
+    || templatesSnapshot.size > 0;
 
   if (!hasStructuredData) {
     return null;
@@ -200,7 +206,11 @@ async function loadStructuredState(userId) {
     favoritos: Array.isArray(userData.favoritos) ? userData.favoritos : [],
     historicoAlimentos: Array.isArray(userData.historicoAlimentos) ? userData.historicoAlimentos : [],
     metasDiarias: goalsSnapshot.exists ? goalsSnapshot.data() : null,
-    tmbPerfil: bmrSnapshot.exists ? bmrSnapshot.data() : null
+    tmbPerfil: bmrSnapshot.exists ? bmrSnapshot.data() : null,
+    templatesRefeicao: templatesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+    tiposRefeicao: Array.isArray(userData.tiposRefeicao) && userData.tiposRefeicao.length
+      ? userData.tiposRefeicao
+      : null
   };
 }
 
@@ -229,7 +239,8 @@ export async function saveStructuredState(userId, data) {
         id: getSafeDocId(food.id),
         updatedAt: fieldValue.serverTimestamp()
       })
-    )
+    ),
+    setTemplates(userId, data.templatesRefeicao || [])
   ]);
 
   const daysSnapshot = await getDaysRef(userId).get();
@@ -248,11 +259,15 @@ export async function saveStructuredState(userId, data) {
 }
 
 export async function setUserMeta(userId, data) {
-  await getUserRef(userId).set({
+  const payload = {
     favoritos: Array.isArray(data.favoritos) ? data.favoritos : [],
     historicoAlimentos: Array.isArray(data.historicoAlimentos) ? data.historicoAlimentos : [],
     updatedAt: fieldValue.serverTimestamp()
-  }, { merge: true });
+  };
+  if (Array.isArray(data.tiposRefeicao) && data.tiposRefeicao.length) {
+    payload.tiposRefeicao = data.tiposRefeicao;
+  }
+  await getUserRef(userId).set(payload, { merge: true });
 }
 
 export async function setGoals(userId, metasDiarias) {
@@ -267,6 +282,16 @@ export async function setBmrProfile(userId, tmbPerfil) {
     ...(tmbPerfil || {}),
     updatedAt: fieldValue.serverTimestamp()
   }, { merge: true });
+}
+
+export async function setTemplates(userId, templates) {
+  const templatesList = Array.isArray(templates) ? templates : [];
+  await syncCollection(
+    getTemplatesRef(userId),
+    templatesList,
+    (t) => getSafeDocId(t.id),
+    (t) => ({ ...t, id: getSafeDocId(t.id), updatedAt: fieldValue.serverTimestamp() })
+  );
 }
 
 export async function setCustomFood(userId, alimento) {
@@ -313,6 +338,8 @@ export async function applyIncrementalChange(userId, change, fullData) {
       return setUserMeta(userId, change);
     case "day":
       return setDay(userId, change.data, change.refeicoesDoDia);
+    case "templates":
+      return setTemplates(userId, change.templatesRefeicao);
     default:
       return saveStructuredState(userId, fullData);
   }

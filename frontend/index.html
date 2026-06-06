@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tracker de Macronutrientes</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1D6B57" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0F172A" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Tracker">
+  <link rel="apple-touch-icon" href="/icons/icon.svg">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,6 +26,7 @@
   <script src="/services/api.js" defer></script>
   <script type="module" src="/src/api-config.js"></script>
   <script type="module" src="/src/firebase.js"></script>
+  <script type="module" src="/src/pwa.js"></script>
   <script src="/controller/controller.js" defer></script>
 </head>
 <body>
@@ -303,7 +315,7 @@
             <span class="panel-kicker">Refei&ccedil;&otilde;es</span>
             <h2>Organiza&ccedil;&atilde;o do dia</h2>
           </div>
-          <button class="btn btn-outline-secondary btn-compact" id="btnRepetirRefeicao" type="button">Repetir refei&ccedil;&otilde;es anteriores</button>
+          <button class="btn btn-outline-secondary btn-compact" id="btnRepetirRefeicao" type="button">Adicionar refei&ccedil;&atilde;o completa</button>
         </div>
 
         <section class="meal-summary-grid" id="resumoRefeicoes" aria-label="Resumo por refeicao"></section>
@@ -368,6 +380,64 @@
             </div>
           </div>
         </section>
+
+        <section class="panel" id="secaoRefeicaoCompleta">
+          <div class="panel-heading panel-heading-table">
+            <div>
+              <span class="panel-kicker">Templates</span>
+              <h2>Refei&ccedil;&otilde;es completas</h2>
+            </div>
+            <p>Grupos de alimentos pr&eacute;-salvos para adicionar ao seu dia com um toque.</p>
+          </div>
+
+          <div id="listaRefeicaoCompleta">
+            <!-- gerado por view.js -->
+          </div>
+
+          <div id="formCriacaoRefeicaoCompleta" hidden>
+            <div class="refeicao-completa-form-header">
+              <span class="refeicao-completa-form-titulo">Nova refei&ccedil;&atilde;o completa</span>
+              <button type="button" id="btnFecharFormCriacaoCompleta" class="btn-ghost-sm" aria-label="Fechar formul&aacute;rio">&times;</button>
+            </div>
+            <div class="form-grid refeicao-completa-form-grid">
+              <div class="field-group span-12">
+                <label for="nomeNovaRefeicao" class="form-label">Nome da refei&ccedil;&atilde;o completa</label>
+                <input type="text" id="nomeNovaRefeicao" class="form-control" placeholder="Ex.: Caf&eacute; da manh&atilde; habitual">
+              </div>
+
+              <div class="field-group span-12">
+                <label for="buscaAlimentoNovaRefeicao" class="form-label">Buscar alimento</label>
+                <div class="food-search-wrapper">
+                  <input type="text" id="buscaAlimentoNovaRefeicao" class="form-control" autocomplete="off" placeholder="Digite para buscar um alimento">
+                  <div class="food-search-panel" id="painelBuscaNovaRefeicaoAlimentos" hidden></div>
+                </div>
+              </div>
+
+              <div class="field-group span-8 span-md-6">
+                <label for="quantidadeNovaRefeicao" class="form-label">Quantidade (g)</label>
+                <input type="number" id="quantidadeNovaRefeicao" class="form-control" placeholder="Ex.: 150" min="0.01" step="0.01" inputmode="decimal">
+              </div>
+
+              <div class="field-group span-4 span-md-6 field-group-end">
+                <button class="btn btn-outline-secondary w-100" id="btnAdicionarItemNovaRefeicao" type="button">Adicionar</button>
+              </div>
+
+              <div class="field-group span-12">
+                <div id="listaItensNovaRefeicao" class="nova-refeicao-itens"></div>
+              </div>
+
+              <div class="field-group span-12 edit-actions-row">
+                <button class="btn btn-primary" id="btnSalvarNovaRefeicaoCompleta" type="button">Salvar refei&ccedil;&atilde;o completa</button>
+                <button class="btn btn-outline-secondary" id="btnCancelarNovaRefeicaoCompleta" type="button">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="refeicao-completa-footer" id="btnRowCriarRefeicaoCompleta">
+            <button class="btn btn-outline-secondary btn-compact" id="btnCriarRefeicaoCompleta" type="button">+ Criar nova refei&ccedil;&atilde;o completa</button>
+          </div>
+        </section>
+
       </section>
 
       <section class="page-view" id="page-alimentos" data-page="alimentos" hidden>

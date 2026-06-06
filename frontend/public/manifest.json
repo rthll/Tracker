@@ -1,0 +1,35 @@
+{
+  "name": "Tracker de Macronutrientes",
+  "short_name": "Tracker",
+  "description": "Rastreie carboidratos, proteínas, gorduras e calorias do seu dia.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F9FAFB",
+  "theme_color": "#1D6B57",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Adicionar alimento",
+      "short_name": "Adicionar",
+      "url": "/?acao=adicionar",
+      "description": "Registrar alimento rapidamente"
+    }
+  ],
+  "categories": ["health", "fitness"]
+}

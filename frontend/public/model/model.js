@@ -23,12 +23,7 @@ const Model = {
     macros: { proteinas: 0, gorduras: 0, carboidratos: 0 }
   },
   limiteHistorico: 8,
-  tiposRefeicao: [
-    { id: "cafe", nome: "Caf\u00e9 da manh\u00e3" },
-    { id: "almoco", nome: "Almo\u00e7o" },
-    { id: "jantar", nome: "Jantar" },
-    { id: "lanches", nome: "Lanches" }
-  ],
+  tiposRefeicao: [],
   refeicaoPadrao: "almoco",
 
   init(dadosRemotos = null, usuarioId = null) {
@@ -59,11 +54,22 @@ const Model = {
     return `${this.storageKeyBase}:user:${encodeURIComponent(this.usuarioStorageId)}`;
   },
 
+  tiposRefeicaoPadrao() {
+    return [
+      { id: "cafe", nome: "Café da manhã" },
+      { id: "almoco", nome: "Almoço" },
+      { id: "jantar", nome: "Jantar" },
+      { id: "lanches", nome: "Lanches" }
+    ];
+  },
+
   resetarDadosUsuario() {
+    this.tiposRefeicao = this.tiposRefeicaoPadrao();
     this.alimentosPersonalizados = [];
     this.refeicoesPorData = {};
     this.favoritos = [];
     this.historicoAlimentos = [];
+    this.templatesRefeicao = [];
     this.metasDiarias = this.normalizarMetas(null);
     this.tmbPerfil = this.normalizarTmbPerfil(null);
   },
@@ -96,6 +102,10 @@ const Model = {
   },
 
   carregarDados(dados) {
+    // tiposRefeicao deve ser carregado antes de refeicoesPorData pois normalizarRefeicaoDia depende dele
+    this.tiposRefeicao = Array.isArray(dados && dados.tiposRefeicao) && dados.tiposRefeicao.length
+      ? dados.tiposRefeicao
+      : this.tiposRefeicaoPadrao();
     this.alimentosPersonalizados = Array.isArray(dados && dados.alimentosPersonalizados)
       ? dados.alimentosPersonalizados.map((alimento) => this.normalizarAlimentoPersonalizado(alimento))
       : Array.isArray(dados && dados.alimentos)
@@ -106,16 +116,19 @@ const Model = {
     this.historicoAlimentos = Array.isArray(dados && dados.historicoAlimentos)
       ? dados.historicoAlimentos
       : [];
+    this.templatesRefeicao = Array.isArray(dados && dados.templatesRefeicao) ? dados.templatesRefeicao : [];
     this.metasDiarias = this.normalizarMetas(dados && dados.metasDiarias);
     this.tmbPerfil = this.normalizarTmbPerfil(dados && dados.tmbPerfil);
   },
 
   getDadosPersistencia() {
     return {
+      tiposRefeicao: this.tiposRefeicao,
       alimentosPersonalizados: this.alimentosPersonalizados,
       refeicoesPorData: this.refeicoesPorData,
       favoritos: this.favoritos,
       historicoAlimentos: this.historicoAlimentos,
+      templatesRefeicao: this.templatesRefeicao,
       metasDiarias: this.metasDiarias,
       tmbPerfil: this.tmbPerfil
     };
@@ -240,7 +253,8 @@ const Model = {
   },
 
   normalizarRefeicaoId(refeicaoId) {
-    return this.isTipoRefeicaoValido(refeicaoId) ? refeicaoId : this.refeicaoPadrao;
+    if (this.isTipoRefeicaoValido(refeicaoId)) return refeicaoId;
+    return this.tiposRefeicao[0]?.id || this.refeicaoPadrao;
   },
 
   criarRefeicoesVazias() {
@@ -746,6 +760,44 @@ const Model = {
       historicoAlimentos: this.historicoAlimentos
     });
     return quantidadeItens;
+  },
+
+  adicionarTipoRefeicao(nome) {
+    const nomeLimpo = String(nome || "").trim();
+    if (!nomeLimpo) return null;
+    const novoTipo = { id: `refeicao:${Date.now()}`, nome: nomeLimpo };
+    this.tiposRefeicao = [...this.tiposRefeicao, novoTipo];
+    this.salvar({ tipo: "userMeta", favoritos: this.favoritos, historicoAlimentos: this.historicoAlimentos, tiposRefeicao: this.tiposRefeicao });
+    return novoTipo;
+  },
+
+  removerTipoRefeicao(id) {
+    this.tiposRefeicao = this.tiposRefeicao.filter((r) => r.id !== id);
+    this.salvar({ tipo: "userMeta", favoritos: this.favoritos, historicoAlimentos: this.historicoAlimentos, tiposRefeicao: this.tiposRefeicao });
+  },
+
+  getTemplatesRefeicao() {
+    return [...this.templatesRefeicao];
+  },
+
+  adicionarTemplate(template) {
+    this.templatesRefeicao = [template, ...this.templatesRefeicao];
+    this.salvar({ tipo: "templates", templatesRefeicao: this.templatesRefeicao });
+  },
+
+  removerTemplate(id) {
+    this.templatesRefeicao = this.templatesRefeicao.filter((t) => t.id !== id);
+    this.salvar({ tipo: "templates", templatesRefeicao: this.templatesRefeicao });
+  },
+
+  aplicarTemplateNoDia(templateItens, refeicaoId, data) {
+    if (!data || !Array.isArray(templateItens) || !templateItens.length) return;
+    const refeicoesDoDia = this.garantirRefeicoesDoDia(data);
+    const refeicaoNormalizada = this.normalizarRefeicaoId(refeicaoId);
+    templateItens.forEach((item) => {
+      refeicoesDoDia[refeicaoNormalizada].push({ ...item, id: this.criarId("entry") });
+    });
+    this.salvar({ tipo: "day", data, refeicoesDoDia });
   },
 
   moverItem(data, refeicaoOrigemId, index, refeicaoDestinoId) {

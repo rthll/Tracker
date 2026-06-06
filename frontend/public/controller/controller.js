@@ -16,6 +16,9 @@ const Controller = {
   cacheBuscaCategoria: new Map(),
   timerBuscaRegistro: null,
   timerBuscaEdicao: null,
+  timerBuscaTemplate: null,
+  templateEmCriacao: null,
+  alimentoTemplateSelecionadoId: null,
   usuarioAtual: null,
   cadastroPendenteEmail: "",
   cadastroCodigoSolicitado: false,
@@ -51,7 +54,22 @@ const Controller = {
         this.alternarFavorito();
       });
       document.getElementById("btnRepetirRefeicao").addEventListener("click", () => {
-        this.repetirRefeicaoAnterior();
+        this.abrirCriacaoRefeicaoCompleta();
+      });
+      document.getElementById("btnCriarRefeicaoCompleta")?.addEventListener("click", () => {
+        this.mostrarCriacaoRefeicaoCompleta();
+      });
+      document.getElementById("btnFecharFormCriacaoCompleta")?.addEventListener("click", () => {
+        this.fecharFormCriacaoRefeicaoCompleta();
+      });
+      document.getElementById("btnAdicionarItemNovaRefeicao")?.addEventListener("click", () => {
+        this.adicionarItemAoTemplate();
+      });
+      document.getElementById("btnSalvarNovaRefeicaoCompleta")?.addEventListener("click", () => {
+        this.salvarRefeicaoCompleta();
+      });
+      document.getElementById("btnCancelarNovaRefeicaoCompleta")?.addEventListener("click", () => {
+        this.fecharFormCriacaoRefeicaoCompleta();
       });
       document.getElementById("btnSalvarMetas").addEventListener("click", () => {
         this.salvarMetasDiarias();
@@ -163,6 +181,23 @@ const Controller = {
       });
       campoBuscaEdicao.addEventListener("focus", () => {
         this.atualizarBuscaAlimentos("edicao");
+      });
+      const campoBuscaTemplate = document.getElementById("buscaAlimentoNovaRefeicao");
+      if (campoBuscaTemplate) {
+        campoBuscaTemplate.addEventListener("input", () => {
+          this.alimentoTemplateSelecionadoId = null;
+          this.agendarAtualizacaoBuscaAlimentos("template");
+        });
+        campoBuscaTemplate.addEventListener("change", () => {
+          this.alimentoTemplateSelecionadoId = null;
+          this.atualizarBuscaAlimentos("template");
+        });
+        campoBuscaTemplate.addEventListener("focus", () => {
+          this.atualizarBuscaAlimentos("template");
+        });
+      }
+      document.getElementById("quantidadeNovaRefeicao")?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") this.adicionarItemAoTemplate();
       });
       if (typeof document.addEventListener === "function") {
         document.addEventListener("click", (event) => {
@@ -850,6 +885,16 @@ const Controller = {
       return;
     }
 
+    if (contexto === "template") {
+      this.alimentoTemplateSelecionadoId = alimento.id;
+      const campo = document.getElementById("buscaAlimentoNovaRefeicao");
+      if (campo) campo.value = alimento.nome;
+      this.cancelarAtualizacaoBuscaAlimentos("template");
+      View.ocultarPaineisBuscaAlimentos();
+      document.getElementById("quantidadeNovaRefeicao")?.focus();
+      return;
+    }
+
     this.selecionarAlimento(alimento.id);
   },
 
@@ -943,7 +988,9 @@ const Controller = {
     this.prepararIndiceBuscaAlimentos();
     const termo = contexto === "edicao"
       ? document.getElementById("editarBuscaAlimento").value
-      : document.getElementById("buscaAlimento").value;
+      : contexto === "template"
+        ? (document.getElementById("buscaAlimentoNovaRefeicao")?.value || "")
+        : document.getElementById("buscaAlimento").value;
     const resultados = categoriaId
       ? this.buscarAlimentosPorCategoria(categoriaId)
       : this.buscarAlimentosPorTermo(termo);
@@ -979,7 +1026,7 @@ const Controller = {
   },
 
   agendarAtualizacaoBuscaAlimentos(contexto = "registro") {
-    const chaveTimer = contexto === "edicao" ? "timerBuscaEdicao" : "timerBuscaRegistro";
+    const chaveTimer = contexto === "edicao" ? "timerBuscaEdicao" : contexto === "template" ? "timerBuscaTemplate" : "timerBuscaRegistro";
 
     if (this[chaveTimer]) {
       window.clearTimeout(this[chaveTimer]);
@@ -996,7 +1043,9 @@ const Controller = {
       ? ["timerBuscaEdicao"]
       : contexto === "registro"
         ? ["timerBuscaRegistro"]
-        : ["timerBuscaRegistro", "timerBuscaEdicao"];
+        : contexto === "template"
+          ? ["timerBuscaTemplate"]
+          : ["timerBuscaRegistro", "timerBuscaEdicao", "timerBuscaTemplate"];
 
     chavesTimer.forEach((chaveTimer) => {
       if (this[chaveTimer]) {
@@ -1379,6 +1428,181 @@ const Controller = {
     if (overlay) overlay.hidden = true;
   },
 
+  iniciarSalvarTemplate(refeicaoId) {
+    const refeicoes = Model.getRefeicoesDoDia(this.getDataAtual());
+    const itens = refeicoes[refeicaoId] || [];
+    if (!itens.length) {
+      View.mostrarToast("Esta refeição está vazia. Adicione alimentos antes de salvar.", "error");
+      return;
+    }
+    const tiposRefeicao = Model.getTiposRefeicao();
+    const refeicao = tiposRefeicao.find((r) => r.id === refeicaoId);
+    const nomeSugerido = refeicao ? `${refeicao.nome} habitual` : refeicaoId;
+    const nome = prompt("Nome da refeição completa:", nomeSugerido);
+    if (nome === null) return;
+    const nomeFinal = nome.trim() || nomeSugerido;
+    const template = {
+      id: `tpl:${Date.now()}`,
+      nome: nomeFinal,
+      refeicaoId,
+      criadoEm: new Date().toISOString(),
+      itens: itens.map((item) => ({
+        alimentoId: item.alimentoId || null,
+        nome: item.nome,
+        quantidade: item.quantidade,
+        carboidratos: item.carboidratos,
+        proteinas: item.proteinas,
+        gorduras: item.gorduras,
+        calorias: item.calorias
+      }))
+    };
+    Model.adicionarTemplate(template);
+    this.atualizarView();
+    View.mostrarToast(`Refeição "${nomeFinal}" salva.`, "success");
+  },
+
+  adicionarTipoRefeicao() {
+    const nome = prompt("Nome da nova refeição:");
+    if (!nome || !nome.trim()) return;
+    Model.adicionarTipoRefeicao(nome.trim());
+    View.atualizarSelectRefeicoes(Model.getTiposRefeicao());
+    this.atualizarView();
+  },
+
+  removerTipoRefeicao(refeicaoId) {
+    const tipos = Model.getTiposRefeicao();
+    const refeicao = tipos.find((r) => r.id === refeicaoId);
+    if (!refeicao) return;
+    const itensNoDia = (Model.getRefeicoesDoDia(this.getDataAtual())[refeicaoId] || []).length;
+    const aviso = itensNoDia
+      ? `Excluir "${refeicao.nome}"? Os ${itensNoDia} itens deste dia serão perdidos.`
+      : `Excluir a refeição "${refeicao.nome}"?`;
+    if (!confirm(aviso)) return;
+    Model.removerTipoRefeicao(refeicaoId);
+    View.atualizarSelectRefeicoes(Model.getTiposRefeicao());
+    this.atualizarView();
+  },
+
+  abrirCriacaoRefeicaoCompleta() {
+    const secao = document.getElementById("secaoRefeicaoCompleta");
+    if (!secao) return;
+    this.mostrarCriacaoRefeicaoCompleta();
+    secao.scrollIntoView({ behavior: "smooth", block: "start" });
+  },
+
+  fecharFormCriacaoRefeicaoCompleta() {
+    const form = document.getElementById("formCriacaoRefeicaoCompleta");
+    if (form) form.hidden = true;
+    const btnRow = document.getElementById("btnRowCriarRefeicaoCompleta");
+    if (btnRow) btnRow.hidden = false;
+    this.templateEmCriacao = null;
+    this.alimentoTemplateSelecionadoId = null;
+    this.cancelarAtualizacaoBuscaAlimentos("template");
+    View.ocultarPaineisBuscaAlimentos();
+  },
+
+  mostrarCriacaoRefeicaoCompleta() {
+    const form = document.getElementById("formCriacaoRefeicaoCompleta");
+    if (form) form.hidden = false;
+    const btnRow = document.getElementById("btnRowCriarRefeicaoCompleta");
+    if (btnRow) btnRow.hidden = true;
+    this.templateEmCriacao = { nome: "", itens: [] };
+    this.alimentoTemplateSelecionadoId = null;
+    const nomeEl = document.getElementById("nomeNovaRefeicao");
+    const buscaEl = document.getElementById("buscaAlimentoNovaRefeicao");
+    const qtdEl = document.getElementById("quantidadeNovaRefeicao");
+    if (nomeEl) nomeEl.value = "";
+    if (buscaEl) buscaEl.value = "";
+    if (qtdEl) qtdEl.value = "";
+    View.renderizarItensTemplate([]);
+    if (nomeEl) nomeEl.focus();
+  },
+
+  adicionarItemAoTemplate() {
+    if (!this.templateEmCriacao) return;
+    const quantidade = parseFloat(document.getElementById("quantidadeNovaRefeicao")?.value || "");
+    const alimento = this.alimentoTemplateSelecionadoId
+      ? this.getAlimentoPorIdIndexado(this.alimentoTemplateSelecionadoId)
+      : this.getAlimentoPorNomeIndexado(document.getElementById("buscaAlimentoNovaRefeicao")?.value || "");
+    if (!alimento) {
+      View.mostrarToast("Selecione um alimento cadastrado.", "error");
+      return;
+    }
+    if (!quantidade || quantidade <= 0) {
+      View.mostrarToast("Informe uma quantidade maior que zero.", "error");
+      return;
+    }
+    this.templateEmCriacao.itens.push(this.criarItemRefeicao(alimento, quantidade));
+    const buscaEl = document.getElementById("buscaAlimentoNovaRefeicao");
+    const qtdEl = document.getElementById("quantidadeNovaRefeicao");
+    if (buscaEl) buscaEl.value = "";
+    if (qtdEl) qtdEl.value = "";
+    this.alimentoTemplateSelecionadoId = null;
+    this.cancelarAtualizacaoBuscaAlimentos("template");
+    View.ocultarPaineisBuscaAlimentos();
+    View.renderizarItensTemplate(this.templateEmCriacao.itens);
+    if (buscaEl) buscaEl.focus();
+  },
+
+  removerItemDoTemplate(index) {
+    if (!this.templateEmCriacao) return;
+    this.templateEmCriacao.itens.splice(index, 1);
+    View.renderizarItensTemplate(this.templateEmCriacao.itens);
+  },
+
+  salvarRefeicaoCompleta() {
+    if (!this.templateEmCriacao) return;
+    const nomeEl = document.getElementById("nomeNovaRefeicao");
+    const nome = (nomeEl?.value || "").trim();
+    if (!nome) {
+      View.mostrarToast("Digite um nome para a refeição completa.", "error");
+      if (nomeEl) nomeEl.focus();
+      return;
+    }
+    if (!this.templateEmCriacao.itens.length) {
+      View.mostrarToast("Adicione pelo menos um alimento.", "error");
+      return;
+    }
+    const template = {
+      id: `tpl:${Date.now()}`,
+      nome,
+      refeicaoId: "almoco",
+      criadoEm: new Date().toISOString(),
+      itens: this.templateEmCriacao.itens.map(({ alimentoId, nome: n, quantidade, carboidratos, proteinas, gorduras, calorias }) => ({
+        alimentoId: alimentoId || null,
+        nome: n,
+        quantidade,
+        carboidratos,
+        proteinas,
+        gorduras,
+        calorias
+      }))
+    };
+    Model.adicionarTemplate(template);
+    this.templateEmCriacao = null;
+    this.fecharFormCriacaoRefeicaoCompleta();
+    this.atualizarView();
+    View.mostrarToast(`Refeição "${nome}" salva com sucesso.`, "success");
+  },
+
+  aplicarTemplateComTipo(templateId, refeicaoId) {
+    const template = Model.getTemplatesRefeicao().find((t) => t.id === templateId);
+    if (!template || !(template.itens || []).length) return;
+    const dataAtual = this.getDataAtual();
+    Model.aplicarTemplateNoDia(template.itens, refeicaoId || template.refeicaoId, dataAtual);
+    this.atualizarView();
+    View.mostrarToast(`"${template.nome}" adicionado com sucesso.`, "success");
+  },
+
+  excluirTemplate(templateId) {
+    const template = Model.getTemplatesRefeicao().find((t) => t.id === templateId);
+    if (!template) return;
+    if (!confirm(`Excluir a refeição "${template.nome}"?`)) return;
+    Model.removerTemplate(templateId);
+    this.atualizarView();
+    View.mostrarToast(`Refeição "${template.nome}" excluída.`, "success");
+  },
+
   atualizarView() {
     const dataAtual = this.getDataAtual();
     const dataAnterior = this.obterDataAnterior(dataAtual);
@@ -1398,6 +1622,7 @@ const Controller = {
     const totaisDoDia = View.atualizarTabelaRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());
     View.atualizarDashboard(totaisDoDia, Model.getMetasDiarias());
     View.atualizarProgressoMetas(totaisDoDia, Model.getMetasDiarias());
+    View.renderizarSelecaoTemplates(Model.getTemplatesRefeicao(), Model.getTiposRefeicao());
     this.atualizarRelatorio();
     this.sincronizarAlimentoSelecionado(false);
     this.cancelarAtualizacaoBuscaAlimentos();
