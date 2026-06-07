@@ -3138,6 +3138,40 @@ details.refeicao-card[open] .refeicao-chevron {
   font-size: 0.65rem;
 }
 
+/* Refeição: ações empilhadas abaixo das informações do alimento no mobile */
+.refeicao-item {
+  grid-template-columns: 1fr;
+}
+
+.refeicao-item-actions {
+  grid-column: 1;
+  grid-row: auto;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.refeicao-item-actions .move-select {
+  flex: 0 0 auto;
+  width: 90px;
+  min-width: 0;
+}
+
+/* Template cards: empilhar verticalmente no mobile */
+.template-card {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.template-card-actions {
+  flex-shrink: 1;
+  flex-wrap: wrap;
+}
+
+.template-meal-select {
+  flex: 1 1 auto;
+  min-width: 120px;
+}
+
 @media (min-width: 576px) {
   .page-shell {
     padding: 20px;
@@ -3234,6 +3268,36 @@ details.refeicao-card[open] .refeicao-chevron {
 
   .table {
     min-width: 860px;
+  }
+
+  /* Refeição: restaura layout lado a lado */
+  .refeicao-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+  }
+
+  .refeicao-item-actions {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    flex-wrap: nowrap;
+  }
+
+  .refeicao-item-actions .move-select {
+    flex: 0 0 auto;
+  }
+
+  /* Template cards: restaura layout horizontal */
+  .template-card {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .template-card-actions {
+    flex-shrink: 0;
+  }
+
+  .template-meal-select {
+    flex: 1 1 100px;
   }
 }
 
