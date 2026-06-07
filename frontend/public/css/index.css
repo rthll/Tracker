@@ -3138,14 +3138,14 @@ details.refeicao-card[open] .refeicao-chevron {
   font-size: 0.65rem;
 }
 
-/* Refeição: ações empilhadas abaixo das informações do alimento no mobile */
+/* Refeição: ações abaixo das informações do alimento no mobile */
 .refeicao-item {
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .refeicao-item-actions {
-  grid-column: 1;
-  grid-row: auto;
   flex-wrap: wrap;
   gap: 6px;
 }
@@ -3272,6 +3272,7 @@ details.refeicao-card[open] .refeicao-chevron {
 
   /* Refeição: restaura layout lado a lado */
   .refeicao-item {
+    display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
   }

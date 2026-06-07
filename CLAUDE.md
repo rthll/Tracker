@@ -23,16 +23,21 @@ Aplicação web para rastreamento de macronutrientes (carboidratos, proteínas, 
 /
 ├── frontend/           # App frontend (Vite)
 │   ├── index.html      # Único HTML — toda a UI está aqui
+│   ├── .env.example    # Variáveis de ambiente do frontend (VITE_FIREBASE_*)
 │   ├── public/
 │   │   ├── css/index.css          # Todo o CSS customizado (design system VibeUX)
 │   │   ├── data/taco-alimentos.js # Tabela TACO embutida como window.TACO_ALIMENTOS
 │   │   ├── model/model.js         # Model (estado global, persistência local + remota)
 │   │   ├── view/view.js           # View (manipulação de DOM, renderização)
 │   │   ├── controller/controller.js # Controller (eventos, lógica de negócio)
-│   │   └── services/api.js        # Cliente HTTP para a API backend
+│   │   ├── services/api.js        # Cliente HTTP para a API backend
+│   │   ├── manifest.json          # PWA manifest (nome, ícones, shortcuts, display standalone)
+│   │   ├── sw.js                  # Service Worker (cache-first, network-first, stale-while-revalidate)
+│   │   └── icons/                 # SVG icons para PWA (icon.svg + icon-maskable.svg)
 │   └── src/
 │       ├── api-config.js          # Define window.TRACKER_API_BASE_URL
-│       └── firebase.js            # Firebase client SDK — expõe window.TrackerAuth e window.TrackerDataService
+│       ├── firebase.js            # Firebase client SDK — expõe window.TrackerAuth e window.TrackerDataService
+│       └── pwa.js                 # Registra o Service Worker; mostra toast ao detectar atualização
 ├── backend/
 │   └── src/
 │       ├── server.js              # Ponto de entrada dev (node --watch)
@@ -46,7 +51,10 @@ Aplicação web para rastreamento de macronutrientes (carboidratos, proteínas, 
 │       │   ├── account.routes.js  # /auth/account (DELETE)
 │       │   ├── tracker.routes.js  # /tracker/state (GET, PUT, PATCH)
 │       │   └── health.routes.js   # /health
-│       ├── controllers/           # Handlers HTTP finos — delegam para services
+│       ├── controllers/
+│       │   ├── auth.controller.js     # Handlers de autenticação
+│       │   ├── account.controller.js  # Handler de deleção de conta
+│       │   └── tracker.controller.js  # Handlers de leitura/escrita do estado
 │       ├── middlewares/
 │       │   ├── auth.middleware.js             # Valida Bearer token Firebase
 │       │   └── admin-credentials.middleware.js # Guarda rotas se não há credenciais Admin
@@ -57,6 +65,14 @@ Aplicação web para rastreamento de macronutrientes (carboidratos, proteínas, 
 │           └── account.service.js       # Deleção recursiva de conta
 ├── api/
 │   └── index.js        # Entry point da função serverless Vercel — importa e exporta createApp()
+├── firebase/
+│   ├── firestore.rules         # Regras de segurança: só o próprio uid pode ler/escrever seus dados
+│   └── firestore.indexes.json  # Índices compostos (atualmente vazios)
+├── data/
+│   └── Taco-4a-Edicao*.csv    # CSV fonte da tabela TACO (origem do taco-alimentos.js)
+├── scripts/
+│   └── converter-taco.js      # Utilitário para converter o CSV TACO em window.TACO_ALIMENTOS
+├── firebase.json       # Config do Firebase CLI (aponta para firebase/ e frontend/public)
 ├── vercel.json         # Config de build e rewrite rules para deploy
 ├── package.json        # Raiz: scripts dev/build, devDep concurrently
 └── .gitignore
@@ -98,6 +114,10 @@ O Vite tem proxy configurado em `frontend/vite.config.js`: requisições `/api/*
 | `MAIL_FROM` | Email | Remetente dos e-mails |
 
 Em desenvolvimento sem credenciais de e-mail, o código de cadastro é impresso no console do backend.
+
+### Variáveis de ambiente (frontend)
+
+Definidas em `frontend/.env.local` (não versionado). Ver `frontend/.env.example`. São prefixadas com `VITE_FIREBASE_` e configuram o Firebase client SDK (apiKey, authDomain, projectId, etc.). Injetadas em `frontend/src/firebase.js` via `import.meta.env`.
 
 ---
 
@@ -166,7 +186,8 @@ O frontend é **vanilla JS sem framework**, carregado como scripts `defer` e um 
 4. `api.js` → define `window.Api`
 5. `api-config.js` (module) → define `window.TRACKER_API_BASE_URL`
 6. `firebase.js` (module) → define `window.TrackerAuth`, `window.TrackerDataService`, registra token provider em `window.Api`
-7. `controller.js` → define `window.Controller`, chama `Controller.init()` via `DOMContentLoaded`
+7. `pwa.js` (module) → registra o Service Worker; detecta updates e exibe toast via `window.View`
+8. `controller.js` → define `window.Controller`, chama `Controller.init()` via `DOMContentLoaded`
 
 ### Model (`model.js`)
 - Estado global: `alimentosTaco`, `alimentosPersonalizados`, `refeicoesPorData`, `favoritos`, `historicoAlimentos`, `metasDiarias`, `tmbPerfil`
@@ -230,6 +251,32 @@ Definido em `@media (prefers-color-scheme: dark)` no topo do CSS. Sobrescreve as
 - **Tabelas Bootstrap:** sobreescrever `--bs-table-color`, `--bs-table-bg`, `--bs-table-border-color` no `.table` para que as variáveis Bootstrap apontem para nosso tema (o seletor Bootstrap `.table > :not(caption) > * > *` tem especificidade 0,1,3 e supera regras diretas 0,1,2)
 - **Fundos hardcoded:** evitar — usar sempre variáveis CSS para que dark mode funcione
 - **Bottom nav mobile:** visível em `≤767px`, substitui o top nav. 4 itens fixos + "Mais" (Alimentos, Relatórios)
+
+---
+
+## PWA (Progressive Web App)
+
+O app é instalável como PWA. Os arquivos relevantes ficam em `frontend/public/`.
+
+- **`manifest.json`** — define nome, ícones, `display: standalone`, `theme_color: #1D6B57` e um shortcut "Adicionar alimento" (`/?acao=adicionar`)
+- **`sw.js`** — Service Worker com três estratégias de cache:
+  - **cache-first** — `/data/taco-alimentos.js` (arquivo grande, nunca muda)
+  - **network-first** — `index.html` / navegação SPA (pega atualizações, cai no cache offline)
+  - **stale-while-revalidate** — demais assets da origem e recursos externos (Bootstrap CDN, Google Fonts)
+  - Requisições `/api/*` nunca são cacheadas
+- **`pwa.js`** — registra o SW; ao detectar novo conteúdo instalado (`updatefound`), exibe `View.mostrarToast('Atualização disponível...')`
+- **`icons/`** — `icon.svg` (any) e `icon-maskable.svg` (maskable) em SVG
+
+**Regra:** ao mudar assets que ficam em cache, incrementar `CACHE_VERSION` em `sw.js` para invalidar caches antigos.
+
+---
+
+## Firebase CLI (config local)
+
+Os arquivos `firebase.json` e `.firebaserc` na raiz são usados apenas pelo Firebase CLI (ex: `firebase deploy --only firestore:rules`). Não afetam o deploy no Vercel.
+
+- **`firebase/firestore.rules`** — regra única: `allow read, write: if request.auth != null && request.auth.uid == userId;` (só o próprio usuário acessa seus dados)
+- **`firebase/firestore.indexes.json`** — sem índices compostos adicionais no momento
 
 ---
 
