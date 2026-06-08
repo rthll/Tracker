@@ -1483,6 +1483,7 @@ body {
 .report-section {
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 
 .report-section-heading {
@@ -1568,6 +1569,7 @@ body {
 
 .report-table-wrapper {
   overflow-x: auto;
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
 }
@@ -1616,6 +1618,7 @@ body {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
+  min-width: 0;
 }
 
 .report-day-header {
@@ -4420,6 +4423,42 @@ html.dark .chat-panel-overlay { background: rgba(0, 0, 0, 0.6); }
 html.dark .chat-bubble .chat-code { background: rgba(255, 255, 255, 0.12); }
 html.dark .chat-message.is-user .chat-bubble .chat-code { background: rgba(255, 255, 255, 0.18); }
 
+
+/* ── Relatórios — correções mobile ──────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .report-generated {
+    min-width: 0;
+  }
+
+  .report-title-block h2 {
+    font-size: 1.3rem;
+  }
+
+  .report-day-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .report-day-header span {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+
+  .report-table th,
+  .report-table td {
+    padding: 8px 10px;
+    font-size: 0.78rem;
+  }
+
+  .report-table th {
+    font-size: 0.72rem;
+  }
+
+  .report-metric-card {
+    padding: 12px;
+  }
+}
 
 /* Print: hide chat elements */
 @media print {
