@@ -74,6 +74,7 @@ export const env = {
     process.env.FIREBASE_SERVICE_ACCOUNT_BASE64
     || process.env.GOOGLE_APPLICATION_CREDENTIALS
   ),
+  n8nWebhookUrl: process.env.N8N_WEBHOOK_URL || "",
   hasResendCredentials: Boolean(process.env.RESEND_API_KEY),
   hasSmtpCredentials: Boolean(
     process.env.SMTP_HOST

@@ -34,12 +34,15 @@ const Model = {
     if (dadosRemotos !== null && dadosRemotos !== undefined) {
       this.carregarDados(dadosRemotos);
       this.salvarLocal();
+      this.syncToStores();
       return;
     }
 
     if (!this.usuarioStorageId) {
       this.carregar();
     }
+
+    this.syncToStores();
   },
 
   definirUsuarioStorage(usuarioId) {
@@ -141,6 +144,7 @@ const Model = {
       : null;
 
     this.salvarLocal(dados);
+    this.syncToStores();
 
     if (!usuario || !window.TrackerDataService) {
       return;
@@ -834,6 +838,27 @@ const Model = {
       tipo: "day",
       data,
       refeicoesDoDia: this.getRefeicoesDoDia(data)
+    });
+  },
+
+  // Sincroniza o estado atual para as Pinia stores (reatividade para Vue components)
+  syncToStores() {
+    const s = window._stores;
+    if (!s) return;
+
+    s.tracker.$patch({
+      metasDiarias:      { ...this.metasDiarias },
+      refeicoesPorData:  JSON.parse(JSON.stringify(this.refeicoesPorData)),
+      tmbPerfil:         { ...this.tmbPerfil, macros: { ...this.tmbPerfil.macros } },
+      tiposRefeicao:     this.tiposRefeicao.map((r) => ({ ...r })),
+      templatesRefeicao: (this.templatesRefeicao || []).map((t) => ({ ...t }))
+    });
+
+    s.food.$patch({
+      alimentosTaco:           this.alimentosTaco,
+      alimentosPersonalizados: this.alimentosPersonalizados.map((a) => ({ ...a })),
+      favoritos:               [...this.favoritos],
+      historicoAlimentos:      [...this.historicoAlimentos]
     });
   }
 };

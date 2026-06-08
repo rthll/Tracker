@@ -1,11 +1,15 @@
 const View = {
   mostrarPagina(paginaAtiva) {
+    if (window._stores?.ui) {
+      window._stores.ui.paginaAtual = paginaAtiva;
+      return;
+    }
+    // Fallback DOM approach
     document.querySelectorAll(".page-view").forEach((pagina) => {
       const ativa = pagina.dataset.page === paginaAtiva;
       pagina.hidden = !ativa;
       pagina.classList.toggle("is-active", ativa);
     });
-
     document.querySelectorAll("[data-page-target]").forEach((botao) => {
       const ativo = botao.dataset.pageTarget === paginaAtiva;
       botao.classList.toggle("is-active", ativo);
@@ -14,11 +18,14 @@ const View = {
   },
 
   atualizarCabecalhos(dataFormatada) {
-    document.getElementById("resumoData").textContent = dataFormatada;
-    document.getElementById("tituloRefeicao").textContent = `Refei\u00e7\u00f5es de ${dataFormatada}`;
+    // Managed by AppHeader.vue (reactive from trackerStore.dataAtual)
+    const tituloRefeicao = document.getElementById("tituloRefeicao");
+    if (tituloRefeicao) tituloRefeicao.textContent = `Refei\u00e7\u00f5es de ${dataFormatada}`;
   },
 
   atualizarSelectRefeicoes(tiposRefeicao) {
+    // tipoRefeicao is in PageDashboard v-once block — View.js can update it
+    // editarTipoRefeicao is in PageRefeicoes v-once block — View.js can update it
     const fallback = tiposRefeicao[0]?.id || "almoco";
     this.preencherSelectRefeicoes("tipoRefeicao", tiposRefeicao, fallback);
     this.preencherSelectRefeicoes("editarTipoRefeicao", tiposRefeicao, fallback);
@@ -51,9 +58,10 @@ const View = {
     const quantidade = document.getElementById("quantidade");
     const tipoRefeicao = document.getElementById("tipoRefeicao");
 
+    if (!campoBusca) return; // Managed by PageDashboard Vue component (v-once)
     campoBusca.disabled = !alimentos.length;
-    quantidade.disabled = !alimentos.length;
-    tipoRefeicao.disabled = !alimentos.length;
+    if (quantidade) quantidade.disabled = !alimentos.length;
+    if (tipoRefeicao) tipoRefeicao.disabled = !alimentos.length;
     campoBusca.placeholder = alimentos.length
       ? "Digite para buscar um alimento"
       : "Cadastre um alimento primeiro";
@@ -199,8 +207,11 @@ const View = {
   },
 
   atualizarAlimentosPersonalizados(alimentosPersonalizados, totalTaco = 0) {
-    document.getElementById("contadorAlimentos").textContent = String(alimentosPersonalizados.length);
-    document.getElementById("contadorTaco").textContent = String(totalTaco);
+    const el = document.getElementById("contadorAlimentos");
+    if (!el) return; // Managed by PageAlimentos Vue component
+    el.textContent = String(alimentosPersonalizados.length);
+    const contadorTaco = document.getElementById("contadorTaco");
+    if (contadorTaco) contadorTaco.textContent = String(totalTaco);
     this.renderizarListaChips("listaPersonalizados", alimentosPersonalizados, "Nenhum alimento personalizado cadastrado.");
   },
 
@@ -259,6 +270,7 @@ const View = {
 
   atualizarBotaoRepetir(quantidadeItensOntem) {
     const botao = document.getElementById("btnRepetirRefeicao");
+    if (!botao) return; // Managed by PageRefeicoes Vue component
     botao.disabled = quantidadeItensOntem <= 0;
     botao.textContent = quantidadeItensOntem > 0
       ? `Repetir refei\u00e7\u00f5es anteriores (${quantidadeItensOntem})`
@@ -266,6 +278,8 @@ const View = {
   },
 
   atualizarMetasDiarias(metas) {
+    const input = document.getElementById("metaCarboidratos");
+    if (!input) return; // Managed by PageMetas Vue component
     const campos = [
       ["metaCarboidratos", metas.carboidratos],
       ["metaProteinas", metas.proteinas],
@@ -274,21 +288,22 @@ const View = {
     ];
 
     campos.forEach(([id, valor]) => {
-      const input = document.getElementById(id);
+      const el = document.getElementById(id);
 
-      if (document.activeElement !== input) {
-        input.value = valor > 0 ? String(valor) : "";
+      if (el && document.activeElement !== el) {
+        el.value = valor > 0 ? String(valor) : "";
       }
     });
   },
 
   atualizarCalculadoraTmb(perfil) {
+    const sexo = document.getElementById("tmbSexo");
+    if (!sexo) return; // Managed by PageCalculadora Vue component
     const campos = [
       ["tmbPeso", perfil.peso],
       ["tmbAltura", perfil.altura],
       ["tmbIdade", perfil.idade]
     ];
-    const sexo = document.getElementById("tmbSexo");
     const objetivo = document.getElementById("tmbObjetivo");
     const resultado = document.getElementById("tmbResultado");
     const detalhe = document.getElementById("tmbDetalhe");
@@ -338,6 +353,8 @@ const View = {
   },
 
   atualizarProgressoMetas(totais, metas) {
+    const el = document.getElementById("progressoCarboidratosTexto");
+    if (!el) return; // Managed by PageMetas Vue component
     const configuracoes = [
       {
         chave: "carboidratos",
@@ -394,6 +411,8 @@ const View = {
   },
 
   atualizarDashboard(totais, metas) {
+    const el = document.getElementById("dashboardCaloriasConsumidas");
+    if (!el) return; // Managed by PageDashboard Vue component
     this.atualizarDashboardCalorias(totais, metas);
     this.atualizarDistribuicaoMacros(totais);
     this.atualizarGraficoMetaConsumido(totais, metas);
@@ -401,6 +420,8 @@ const View = {
   },
 
   atualizarMacroRings(totais, metas) {
+    const el = document.getElementById("ringCarboidratos");
+    if (!el) return; // Managed by PageDashboard Vue component
     const CIRCUNF = 175.93;
     const aneis = [
       { chave: "carboidratos", ringId: "ringCarboidratos", centroId: "totalCarboResumo",    metaId: "metaCarboRing",    unidade: "g"    },
@@ -584,6 +605,7 @@ const View = {
 
   atualizarResumoPorRefeicao(refeicoesPorDia, tiposRefeicao) {
     const container = document.getElementById("resumoRefeicoes");
+    if (!container) return; // Managed by PageRefeicoes Vue component
     container.innerHTML = "";
 
     tiposRefeicao.forEach((refeicao) => {
@@ -618,6 +640,7 @@ const View = {
 
   atualizarTabelaRefeicao(refeicoesPorDia, tiposRefeicao) {
     const container = document.getElementById("refeicoesPorTipoContainer");
+    if (!container) return { carboidratos: 0, proteinas: 0, gorduras: 0, calorias: 0 }; // Managed by PageRefeicoes Vue
     const totais = { carboidratos: 0, proteinas: 0, gorduras: 0, calorias: 0 };
     const totalItens = tiposRefeicao.reduce((acc, r) => acc + (refeicoesPorDia[r.id] || []).length, 0);
 
@@ -1127,6 +1150,8 @@ const View = {
   },
 
   atualizarTotais(totais) {
+    const el = document.getElementById("totalCarbo");
+    if (!el) return; // Managed by PageRefeicoes Vue component
     const mapeamento = [
       ["totalCarbo", totais.carboidratos],
       ["totalProteina", totais.proteinas],
@@ -1139,7 +1164,8 @@ const View = {
     ];
 
     mapeamento.forEach(([id, valor]) => {
-      document.getElementById(id).textContent = this.formatarNumero(valor);
+      const elId = document.getElementById(id);
+      if (elId) elId.textContent = this.formatarNumero(valor);
     });
   },
 
@@ -1182,24 +1208,20 @@ const View = {
   },
 
   mostrarToast(mensagem, tipo = "info") {
+    if (window._stores?.ui) {
+      window._stores.ui.mostrarToast(mensagem, tipo);
+      return;
+    }
+    // Fallback: DOM approach (used before Vue mounts)
     const container = document.getElementById("appToastContainer");
     if (!container) return;
-
     const toast = document.createElement("div");
     toast.className = `app-toast app-toast-${tipo}`;
     toast.setAttribute("role", tipo === "error" ? "alert" : "status");
     toast.textContent = mensagem;
     container.appendChild(toast);
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => toast.classList.add("is-visible"));
-    });
-
-    const duracao = tipo === "error" ? 5000 : 3500;
-    setTimeout(() => {
-      toast.classList.remove("is-visible");
-      setTimeout(() => toast.remove(), 280);
-    }, duracao);
+    setTimeout(() => { toast.classList.add("app-toast-hiding"); }, 2800);
+    setTimeout(() => { toast.remove(); }, 3500);
   },
 
   renderizarSelecaoTemplates(templates, tiposRefeicao) {

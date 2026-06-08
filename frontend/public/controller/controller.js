@@ -36,24 +36,25 @@ const Controller = {
     const quantidadeEdicao = document.getElementById("editarQuantidade");
     const relatorioDataBase = document.getElementById("relatorioDataBase");
     const relatorioDataPontual = document.getElementById("relatorioDataPontual");
-    inputData.value = this.obterDataHojeLocal();
-    relatorioDataBase.value = inputData.value;
-    relatorioDataPontual.value = inputData.value;
-    this.datasPontuaisRelatorio = [inputData.value];
+    const dataHoje = this.obterDataHojeLocal();
+    if (inputData) inputData.value = dataHoje;
+    if (relatorioDataBase) relatorioDataBase.value = dataHoje;
+    if (relatorioDataPontual) relatorioDataPontual.value = dataHoje;
+    this.datasPontuaisRelatorio = [dataHoje];
     this.atualizarUsuarioLogado();
 
     if (!this.eventosIniciados) {
       this.registrarNavegacao();
-      document.getElementById("btnCadastrar").addEventListener("click", () => {
+      document.getElementById("btnCadastrar")?.addEventListener("click", () => {
         this.cadastrarAlimento();
       });
-      document.getElementById("btnAdicionar").addEventListener("click", () => {
+      document.getElementById("btnAdicionar")?.addEventListener("click", () => {
         this.adicionarRefeicao();
       });
-      document.getElementById("btnFavoritar").addEventListener("click", () => {
+      document.getElementById("btnFavoritar")?.addEventListener("click", () => {
         this.alternarFavorito();
       });
-      document.getElementById("btnRepetirRefeicao").addEventListener("click", () => {
+      document.getElementById("btnRepetirRefeicao")?.addEventListener("click", () => {
         this.abrirCriacaoRefeicaoCompleta();
       });
       document.getElementById("btnCriarRefeicaoCompleta")?.addEventListener("click", () => {
@@ -71,42 +72,18 @@ const Controller = {
       document.getElementById("btnCancelarNovaRefeicaoCompleta")?.addEventListener("click", () => {
         this.fecharFormCriacaoRefeicaoCompleta();
       });
-      document.getElementById("btnSalvarMetas").addEventListener("click", () => {
+      document.getElementById("btnSalvarMetas")?.addEventListener("click", () => {
         this.salvarMetasDiarias();
       });
-      document.getElementById("btnCalcularTmb").addEventListener("click", () => {
+      document.getElementById("btnCalcularTmb")?.addEventListener("click", () => {
         this.calcularTmb();
       });
-      document.getElementById("btnUsarTmbMeta").addEventListener("click", () => {
+      document.getElementById("btnUsarTmbMeta")?.addEventListener("click", () => {
         this.usarTmbComoMetaCalorica();
       });
 
-      // Bottom navigation (mobile)
-      const bottomNavItems = document.querySelectorAll(".bottom-nav-item[data-page-target]");
-      bottomNavItems.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const target = btn.getAttribute("data-page-target");
-          this.navegarPara(target);
-        });
-      });
-
-      const bottomNavMaisItems = document.querySelectorAll(".bottom-nav-more-item[data-page-target]");
-      bottomNavMaisItems.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const target = btn.getAttribute("data-page-target");
-          this._fecharBottomNavMais();
-          this.navegarPara(target);
-        });
-      });
-
-      document.getElementById("btnBottomNavMais")?.addEventListener("click", () => {
-        this._toggleBottomNavMais();
-      });
-
-      document.getElementById("bottomNavOverlay")?.addEventListener("click", () => {
-        this._fecharBottomNavMais();
-      });
-
+      // Bottom navigation (mobile) — managed by AppBottomNav.vue
+      // Date nav — managed by AppHeader.vue
       document.getElementById("btnDataAnterior")?.addEventListener("click", () => {
         this.navegarData(-1);
       });
@@ -125,61 +102,63 @@ const Controller = {
         precisaNavegar ? setTimeout(focar, 80) : focar();
       });
 
-      document.getElementById("tmbObjetivo")?.addEventListener("change", () => {
-        const perfil = Model.getTmbPerfil();
-        if (perfil.resultado > 0) this.calcularTmb();
-      });
+      // tmbObjetivo is now in PageCalculadora Vue component — handled by Vue's @change
+      // document.getElementById("tmbObjetivo")?.addEventListener("change", () => {
+      //   const perfil = Model.getTmbPerfil();
+      //   if (perfil.resultado > 0) this.calcularTmb();
+      // });
       document.getElementById("btnUsarMacrosMeta")?.addEventListener("click", () => {
         this.usarMacrosComoMetas();
       });
-      document.getElementById("relatorioPeriodo").addEventListener("change", () => {
+      document.getElementById("relatorioPeriodo")?.addEventListener("change", () => {
         this.atualizarRelatorio();
       });
-      relatorioDataBase.addEventListener("change", () => {
+      relatorioDataBase?.addEventListener("change", () => {
         this.atualizarRelatorio();
       });
-      document.getElementById("btnAdicionarDataRelatorio").addEventListener("click", () => {
+      document.getElementById("btnAdicionarDataRelatorio")?.addEventListener("click", () => {
         this.adicionarDataPontualRelatorio();
       });
-      document.getElementById("btnGerarRelatorio").addEventListener("click", () => {
+      document.getElementById("btnGerarRelatorio")?.addEventListener("click", () => {
         this.atualizarRelatorio();
       });
-      document.getElementById("btnExportarRelatorioPdf").addEventListener("click", () => {
+      document.getElementById("btnExportarRelatorioPdf")?.addEventListener("click", () => {
         this.exportarRelatorioPdf();
       });
-      document.getElementById("btnSalvarEdicaoRegistro").addEventListener("click", () => {
+      document.getElementById("btnSalvarEdicaoRegistro")?.addEventListener("click", () => {
         this.salvarEdicaoRegistro();
       });
-      document.getElementById("btnCancelarEdicaoRegistro").addEventListener("click", () => {
+      document.getElementById("btnCancelarEdicaoRegistro")?.addEventListener("click", () => {
         this.cancelarEdicaoRegistro();
       });
-      document.getElementById("btnLogout").addEventListener("click", () => {
+      document.getElementById("btnLogout")?.addEventListener("click", () => {
         this.sairUsuario();
       });
-      inputData.addEventListener("change", () => {
-        relatorioDataBase.value = inputData.value;
-        relatorioDataPontual.value = inputData.value;
+      inputData?.addEventListener("change", () => {
+        if (relatorioDataBase) relatorioDataBase.value = inputData.value;
+        if (relatorioDataPontual) relatorioDataPontual.value = inputData.value;
+        if (window._stores) window._stores.tracker.dataAtual = inputData.value;
         this.cancelarEdicaoRegistro();
         this.atualizarView();
       });
-      campoBusca.addEventListener("input", () => {
+      campoBusca?.addEventListener("input", () => {
         this.sincronizarAlimentoSelecionado();
       });
-      campoBusca.addEventListener("change", () => {
+      campoBusca?.addEventListener("change", () => {
         this.sincronizarAlimentoSelecionado(false);
         this.atualizarBuscaAlimentos("registro");
       });
-      campoBusca.addEventListener("focus", () => {
+      campoBusca?.addEventListener("focus", () => {
         this.atualizarBuscaAlimentos("registro");
       });
-      campoBuscaEdicao.addEventListener("input", () => {
+      campoBuscaEdicao?.addEventListener("input", () => {
         this.sincronizarAlimentoEdicaoSelecionado();
       });
-      campoBuscaEdicao.addEventListener("change", () => {
+      campoBuscaEdicao?.addEventListener("change", () => {
         this.sincronizarAlimentoEdicaoSelecionado(false);
         this.atualizarBuscaAlimentos("edicao");
       });
-      campoBuscaEdicao.addEventListener("focus", () => {
+      campoBuscaEdicao?.addEventListener("focus", () => {
         this.atualizarBuscaAlimentos("edicao");
       });
       const campoBuscaTemplate = document.getElementById("buscaAlimentoNovaRefeicao");
@@ -210,12 +189,12 @@ const Controller = {
           }
         });
       }
-      quantidade.addEventListener("keydown", (event) => {
+      quantidade?.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
           this.adicionarRefeicao();
         }
       });
-      quantidadeEdicao.addEventListener("keydown", (event) => {
+      quantidadeEdicao?.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
           this.salvarEdicaoRegistro();
         }
@@ -286,62 +265,8 @@ const Controller = {
   },
 
   registrarEventosAutenticacao() {
-    document.getElementById("btnLogin").addEventListener("click", () => {
-      this.loginUsuario();
-    });
-    document.getElementById("btnRegister").addEventListener("click", () => {
-      this.cadastrarUsuario();
-    });
-    document.getElementById("btnResetPassword").addEventListener("click", () => {
-      this.resetarSenhaUsuario();
-    });
-    document.getElementById("authPassword").addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        this.loginUsuario();
-      }
-    });
-    document.getElementById("authSignupCode").addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        this.confirmarCadastroUsuario();
-      }
-    });
-    document.getElementById("btnReenviarCodigo").addEventListener("click", () => {
-      this.reenviarCodigoCadastro();
-    });
-    document.getElementById("authEmail").addEventListener("input", () => {
-      if (
-        this.cadastroCodigoSolicitado
-        && this.cadastroPendenteEmail
-        && document.getElementById("authEmail").value.trim().toLowerCase() !== this.cadastroPendenteEmail
-      ) {
-        this.resetarEtapaCodigoCadastro();
-      }
-    });
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !document.getElementById("contaModalOverlay").hidden) {
-        this.fecharModalConta();
-      }
-    });
-    document.getElementById("btnConta").addEventListener("click", () => {
-      this.abrirModalConta();
-    });
-    document.getElementById("btnFecharConta").addEventListener("click", () => {
-      this.fecharModalConta();
-    });
-    document.getElementById("contaModalOverlay").addEventListener("click", (event) => {
-      if (event.target === event.currentTarget) {
-        this.fecharModalConta();
-      }
-    });
-    document.getElementById("btnExcluirConta").addEventListener("click", () => {
-      this.mostrarConfirmacaoExclusao();
-    });
-    document.getElementById("btnCancelarExclusao").addEventListener("click", () => {
-      this.ocultarConfirmacaoExclusao();
-    });
-    document.getElementById("btnConfirmarExcluirConta").addEventListener("click", () => {
-      this.confirmarExclusaoConta();
-    });
+    // Auth form is managed by AuthModal.vue
+    // Only wire account modal escape key (AccountModal.vue handles the rest)
   },
 
   getCredenciaisAutenticacao() {
@@ -515,18 +440,33 @@ const Controller = {
   },
 
   abrirModalConta() {
-    const email = this.usuarioAtual && this.usuarioAtual.email
-      ? this.usuarioAtual.email
-      : "—";
-    document.getElementById("contaEmailExibido").textContent = email;
+    // AccountModal.vue manages this via uiStore.contaModalAberta
+    if (window._stores?.ui) {
+      window._stores.ui.contaModalAberta = true;
+      return;
+    }
+    // Fallback DOM approach
+    const email = this.usuarioAtual && this.usuarioAtual.email ? this.usuarioAtual.email : "—";
+    const contaEmailEl = document.getElementById("contaEmailExibido");
+    if (contaEmailEl) contaEmailEl.textContent = email;
     this.ocultarConfirmacaoExclusao();
-    document.getElementById("contaModalOverlay").hidden = false;
-    document.getElementById("btnFecharConta").focus();
-    this._removerFocusTrap = this._ativarFocusTrap(document.querySelector(".conta-modal"));
+    const overlay = document.getElementById("contaModalOverlay");
+    if (overlay) overlay.hidden = false;
+    const btnFechar = document.getElementById("btnFecharConta");
+    if (btnFechar) btnFechar.focus();
+    const modal = document.querySelector(".conta-modal");
+    if (modal) this._removerFocusTrap = this._ativarFocusTrap(modal);
   },
 
   fecharModalConta() {
-    document.getElementById("contaModalOverlay").hidden = true;
+    // AccountModal.vue manages this via uiStore.contaModalAberta
+    if (window._stores?.ui) {
+      window._stores.ui.contaModalAberta = false;
+      return;
+    }
+    // Fallback DOM approach
+    const overlay = document.getElementById("contaModalOverlay");
+    if (overlay) overlay.hidden = true;
     this.ocultarConfirmacaoExclusao();
     if (this._removerFocusTrap) {
       this._removerFocusTrap();
@@ -559,63 +499,80 @@ const Controller = {
   },
 
   mostrarConfirmacaoExclusao() {
-    document.getElementById("contaConfirmacaoExclusao").hidden = false;
-    document.getElementById("btnExcluirConta").hidden = true;
-    document.getElementById("contaStatus").textContent = "";
-    document.getElementById("btnConfirmarExcluirConta").disabled = false;
-    document.getElementById("btnConfirmarExcluirConta").focus();
+    // Managed by AccountModal.vue — no-op when Vue is active
+    const confirmEl = document.getElementById("contaConfirmacaoExclusao");
+    const btnExcluir = document.getElementById("btnExcluirConta");
+    const contaStatus = document.getElementById("contaStatus");
+    const btnConfirmar = document.getElementById("btnConfirmarExcluirConta");
+    if (confirmEl) confirmEl.hidden = false;
+    if (btnExcluir) btnExcluir.hidden = true;
+    if (contaStatus) contaStatus.textContent = "";
+    if (btnConfirmar) { btnConfirmar.disabled = false; btnConfirmar.focus(); }
   },
 
   ocultarConfirmacaoExclusao() {
-    document.getElementById("contaConfirmacaoExclusao").hidden = true;
-    document.getElementById("btnExcluirConta").hidden = false;
-    document.getElementById("contaStatus").textContent = "";
-    document.getElementById("btnConfirmarExcluirConta").disabled = false;
+    // Managed by AccountModal.vue — no-op when Vue is active
+    const confirmEl = document.getElementById("contaConfirmacaoExclusao");
+    const btnExcluir = document.getElementById("btnExcluirConta");
+    const contaStatus = document.getElementById("contaStatus");
+    const btnConfirmar = document.getElementById("btnConfirmarExcluirConta");
+    if (confirmEl) confirmEl.hidden = true;
+    if (btnExcluir) btnExcluir.hidden = false;
+    if (contaStatus) contaStatus.textContent = "";
+    if (btnConfirmar) btnConfirmar.disabled = false;
   },
 
   async confirmarExclusaoConta() {
+    // Managed by AccountModal.vue — fallback for direct calls
     const btnConfirmar = document.getElementById("btnConfirmarExcluirConta");
-    btnConfirmar.disabled = true;
-    document.getElementById("contaStatus").textContent = "Excluindo conta...";
+    if (btnConfirmar) btnConfirmar.disabled = true;
+    const contaStatus = document.getElementById("contaStatus");
+    if (contaStatus) contaStatus.textContent = "Excluindo conta...";
 
     try {
       await window.Api.deleteAccount();
       try { localStorage.removeItem(Model.getStorageKey()); } catch (_) { /* ignore */ }
-      document.getElementById("contaStatus").textContent = "";
+      if (contaStatus) contaStatus.textContent = "";
       this.fecharModalConta();
       await window.TrackerAuth.logout();
     } catch (error) {
-      btnConfirmar.disabled = false;
-      document.getElementById("contaStatus").textContent =
+      if (btnConfirmar) btnConfirmar.disabled = false;
+      if (contaStatus) contaStatus.textContent =
         error.message || "Nao foi possivel excluir a conta. Tente novamente.";
     }
   },
 
   mostrarAutenticacao(mensagem) {
-    document.getElementById("authGate").hidden = false;
-    document.getElementById("appShell").hidden = true;
+    if (window._stores?.ui) {
+      window._stores.ui.setAuthStatus(mensagem);
+    }
+    const authGate = document.getElementById("authGate");
+    const appShell = document.getElementById("appShell");
+    if (authGate) authGate.hidden = false;
+    if (appShell) appShell.hidden = true;
     this.setAuthStatus(mensagem);
   },
 
   mostrarAplicacao(usuario) {
-    document.getElementById("authGate").hidden = true;
-    document.getElementById("appShell").hidden = false;
+    const authGate = document.getElementById("authGate");
+    const appShell = document.getElementById("appShell");
+    if (authGate) authGate.hidden = true;
+    if (appShell) appShell.hidden = false;
     this.usuarioAtual = usuario;
     this.atualizarUsuarioLogado();
   },
 
   atualizarUsuarioLogado() {
-    const elemento = document.getElementById("usuarioLogado");
-
-    if (elemento) {
-      elemento.textContent = this.usuarioAtual && this.usuarioAtual.email
-        ? this.usuarioAtual.email
-        : "Usuario";
-    }
+    const el = document.getElementById("usuarioLogado");
+    if (!el) return; // Managed by AppHeader.vue
+    el.textContent = this.usuarioAtual && this.usuarioAtual.email
+      ? this.usuarioAtual.email
+      : "Usuario";
   },
 
   setAuthStatus(mensagem, tipo = "") {
     const el = document.getElementById("authStatus");
+    if (!el) return; // Managed by AuthModal.vue
     el.textContent = mensagem || "";
     el.className = "auth-status" + (tipo ? ` is-${tipo}` : "");
   },
@@ -636,11 +593,7 @@ const Controller = {
   },
 
   registrarNavegacao() {
-    document.querySelectorAll("[data-page-target]").forEach((botao) => {
-      botao.addEventListener("click", () => {
-        this.navegarPara(botao.dataset.pageTarget);
-      });
-    });
+    // Navigation managed by AppHeader.vue and AppBottomNav.vue
   },
 
   obterPaginaInicial() {
@@ -653,28 +606,14 @@ const Controller = {
 
   navegarPara(pagina, atualizarHash = true) {
     const paginasValidas = ["dashboard", "refeicoes", "alimentos", "metas", "relatorios", "calculadora"];
-
-    if (!paginasValidas.includes(pagina)) {
-      return;
-    }
-
+    if (!paginasValidas.includes(pagina)) return;
     this.paginaAtual = pagina;
-    View.mostrarPagina(pagina);
-
-    if (atualizarHash && window.location) {
-      window.location.hash = pagina;
+    if (window._stores?.ui) {
+      window._stores.ui.paginaAtual = pagina;
+    } else {
+      View.mostrarPagina(pagina);
     }
-
-    // Sync bottom nav active state
-    const bottomItems = document.querySelectorAll(".bottom-nav-item[data-page-target], .bottom-nav-more-item[data-page-target]");
-    bottomItems.forEach((item) => {
-      item.classList.toggle("is-active", item.getAttribute("data-page-target") === pagina);
-    });
-    // If navigating to alimentos or relatorios, mark "Mais" button as active
-    const maisBotao = document.getElementById("btnBottomNavMais");
-    if (maisBotao) {
-      maisBotao.classList.toggle("is-active", ["alimentos", "relatorios"].includes(pagina));
-    }
+    if (atualizarHash && window.location) window.location.hash = pagina;
   },
 
   obterDataHojeLocal() {
@@ -736,7 +675,7 @@ const Controller = {
   },
 
   getDataAtual() {
-    return document.getElementById("dataSelecionada").value || this.obterDataHojeLocal();
+    return document.getElementById("dataSelecionada")?.value || this.obterDataHojeLocal();
   },
 
   getPeriodoRelatorio() {
@@ -1605,17 +1544,19 @@ const Controller = {
 
   atualizarView() {
     const dataAtual = this.getDataAtual();
-    const dataAnterior = this.obterDataAnterior(dataAtual);
     const alimentos = Model.getAlimentos();
-    document.getElementById("dataSelecionada").value = dataAtual;
+    const inputDataEl = document.getElementById("dataSelecionada");
+    if (inputDataEl) inputDataEl.value = dataAtual;
+
+    if (window._stores) window._stores.tracker.dataAtual = dataAtual;
 
     this.prepararIndiceBuscaAlimentos(alimentos);
-    View.atualizarCabecalhos(this.formatarDataExibicao(dataAtual));
+    // View.atualizarCabecalhos managed reactively by AppHeader.vue
     View.atualizarAutocompleteAlimentos(alimentos);
     View.renderizarAtalhosBuscaAlimentos(this.getCategoriasBuscaAlimentos());
     View.atualizarAtalhosAlimentos(Model.getFavoritos(), Model.getHistoricoAlimentos());
     View.atualizarAlimentosPersonalizados(Model.getAlimentosPersonalizados(), Model.getAlimentosTaco().length);
-    View.atualizarBotaoRepetir(Model.getQuantidadeItensDia(dataAnterior));
+    View.atualizarBotaoRepetir(Model.getQuantidadeItensDia(this.obterDataAnterior(dataAtual)));
     View.atualizarCalculadoraTmb(Model.getTmbPerfil());
     View.atualizarMetasDiarias(Model.getMetasDiarias());
     View.atualizarResumoPorRefeicao(Model.getRefeicoesDoDia(dataAtual), Model.getTiposRefeicao());

@@ -1,0 +1,98 @@
+{
+  "name": "Tracker AI — Agente Nutricional",
+  "nodes": [
+    {
+      "id": "node-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tracker-ai",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "b8f3c4d2-a1e5-4f89-bc7d-2e6a0f913c8b"
+    },
+    {
+      "id": "node-code-format",
+      "name": "Formatar Mensagens",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300],
+      "parameters": {
+        "jsCode": "// Extrai o body do webhook (N8N pode entregar em .body ou na raiz)\nconst data = $('Webhook').first().json;\nconst body = data.body || data;\nconst { message = '', history = [], userId = '' } = body;\n\n// Monta o array de mensagens para a API da OpenAI\n// history: últimas 20 mensagens (10 pares) para manter contexto sem estourar tokens\nconst messages = [\n  {\n    role: 'system',\n    content:\n      'Você é um assistente nutricional do Tracker de Macronutrientes. ' +\n      'Ajude o usuário com dúvidas sobre alimentação, macronutrientes, ' +\n      'calorias e registros diários. Seja direto, objetivo e use dados ' +\n      'nutricionais precisos quando souber. ' +\n      'Responda sempre em português brasileiro.'\n  },\n  ...history.slice(-20).map(m => ({\n    role: m.role,\n    content: String(m.content || '')\n  })),\n  { role: 'user', content: String(message) }\n];\n\n// requestBody pronto para enviar à OpenAI\nconst requestBody = {\n  model: 'gpt-4o-mini',\n  messages,\n  temperature: 0.7,\n  max_tokens: 1000\n};\n\nreturn [{ json: { requestBody, userId } }];"
+      }
+    },
+    {
+      "id": "node-openai",
+      "name": "Chamar OpenAI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer SUA_OPENAI_API_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.requestBody) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-respond",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ response: $json.choices[0].message.content }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [{ "node": "Formatar Mensagens", "type": "main", "index": 0 }]
+      ]
+    },
+    "Formatar Mensagens": {
+      "main": [
+        [{ "node": "Chamar OpenAI", "type": "main", "index": 0 }]
+      ]
+    },
+    "Chamar OpenAI": {
+      "main": [
+        [{ "node": "Responder", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}
