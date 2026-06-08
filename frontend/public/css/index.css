@@ -1609,6 +1609,7 @@ body {
 .report-day-list {
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 
 .report-day-card {
@@ -1649,6 +1650,7 @@ body {
 .report-meal-detail {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .report-meal-detail h4 {
