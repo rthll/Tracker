@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useFloating, offset, flip, size, autoUpdate } from '@floating-ui/vue'
 import { animate } from 'motion'
 
@@ -64,6 +64,7 @@ const floatingRef  = ref(null)
 const { floatingStyles } = useFloating(referenceRef, floatingRef, {
   placement: 'bottom-start',
   whileElementsMounted: autoUpdate,
+  transform: false, // use top/left instead of CSS transform — avoids conflict with Motion y animation
   middleware: [
     offset(4),
     flip({ fallbackPlacements: ['top-start'] }),
@@ -76,13 +77,11 @@ const { floatingStyles } = useFloating(referenceRef, floatingRef, {
 })
 
 watch(() => props.foodSearch.painelAberto.value, async (aberto) => {
+  if (!aberto) return
+  await nextTick() // wait for v-show to remove display:none before animating
   const el = floatingRef.value
   if (!el) return
-  if (aberto) {
-    animate(el, { opacity: [0, 1], y: [-6, 0] }, { duration: 0.18 })
-  } else {
-    await animate(el, { opacity: [1, 0], y: [0, -4] }, { duration: 0.12 }).finished
-  }
+  animate(el, { opacity: [0, 1], y: [-6, 0] }, { duration: 0.18 })
 })
 
 function onKeydown(e) {

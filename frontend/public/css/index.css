@@ -1429,6 +1429,7 @@ body {
 
 .report-document {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   color: var(--text-primary);
 }
@@ -1482,6 +1483,7 @@ body {
 
 .report-section {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   min-width: 0;
 }
@@ -1568,6 +1570,7 @@ body {
 }
 
 .report-table-wrapper {
+  width: 100%;
   overflow-x: auto;
   min-width: 0;
   border: 1px solid var(--line);
@@ -1608,12 +1611,14 @@ body {
 
 .report-day-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   min-width: 0;
 }
 
 .report-day-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   padding: 16px;
   border: 1px solid var(--line);
@@ -1649,7 +1654,14 @@ body {
 
 .report-meal-detail {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+  min-width: 0;
+}
+
+/* Cada bloco de refeição (div sem classe) é item do grid acima:
+   garante que ele não cresça além da coluna, deixando o wrapper rolar */
+.report-meal-detail > * {
   min-width: 0;
 }
 
@@ -1947,7 +1959,7 @@ body {
 
 .fab-add {
   position: fixed;
-  bottom: 72px;
+  bottom: calc(72px + env(safe-area-inset-bottom));
   right: 20px;
   z-index: 210;
   display: none;
@@ -2741,8 +2753,8 @@ details.refeicao-card[open] .refeicao-chevron {
 
 .refeicao-completa-form-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
@@ -2832,7 +2844,7 @@ details.refeicao-card[open] .refeicao-chevron {
   }
 
   .app-toast-container {
-    bottom: 76px; /* above 60px bottom nav + margin */
+    bottom: calc(76px + env(safe-area-inset-bottom)); /* above 60px bottom nav + safe area */
   }
 }
 
@@ -3315,6 +3327,11 @@ details.refeicao-card[open] .refeicao-chevron {
 
   .template-meal-select {
     flex: 1 1 100px;
+  }
+
+  /* FAB e bottom nav são exclusivos do mobile — escondê-los no desktop */
+  .fab-add {
+    display: none;
   }
 }
 
@@ -3803,7 +3820,7 @@ details.refeicao-card[open] .refeicao-chevron {
 
 @media (max-width: 576px) {
   .app-toast-container {
-    bottom: 16px;
+    bottom: calc(76px + env(safe-area-inset-bottom)); /* mantém acima do bottom nav */
     right: 16px;
     left: 16px;
     max-width: none;
@@ -3825,9 +3842,9 @@ details.refeicao-card[open] .refeicao-chevron {
     display: none !important;
   }
 
-  /* Push content above the bottom nav */
+  /* Push content above the bottom nav (+ safe area em aparelhos com notch/home indicator) */
   .app-card {
-    padding-bottom: 80px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
 
   /* Bottom nav bar */
@@ -3838,7 +3855,8 @@ details.refeicao-card[open] .refeicao-chevron {
     left: 0;
     right: 0;
     z-index: 150;
-    height: 60px;
+    height: calc(60px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
     background: var(--surface);
     border-top: 1px solid var(--line);
     box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
@@ -3889,7 +3907,7 @@ details.refeicao-card[open] .refeicao-chevron {
   /* "Mais" slide-up panel */
   .bottom-nav-more-panel {
     position: fixed;
-    bottom: 60px;
+    bottom: calc(60px + env(safe-area-inset-bottom));
     left: 0;
     right: 0;
     z-index: 140;
@@ -3982,7 +4000,7 @@ details.refeicao-card[open] .refeicao-chevron {
 
 /* Meal item list transitions */
 .meal-item-enter-active { transition: opacity 0.22s ease, transform 0.22s ease; }
-.meal-item-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
+.meal-item-leave-active { position: absolute; transition: opacity 0.18s ease, transform 0.18s ease; }
 .meal-item-enter-from   { opacity: 0; transform: translateX(-8px); }
 .meal-item-leave-to     { opacity: 0; transform: translateX(8px); }
 .meal-item-move         { transition: transform 0.25s ease; }
@@ -4324,7 +4342,7 @@ details.refeicao-card[open] .refeicao-chevron {
 }
 
 .chat-input-row {
-  padding: 10px 12px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
   display: flex;
   align-items: flex-end;
@@ -4392,8 +4410,13 @@ details.refeicao-card[open] .refeicao-chevron {
 /* Mobile */
 @media (max-width: 767px) {
   .chat-fab {
-    bottom: 134px;
+    bottom: calc(134px + env(safe-area-inset-bottom));
     right: 20px;
+  }
+
+  /* iOS Safari dá zoom automático em campos com fonte < 16px ao focar */
+  .chat-input {
+    font-size: 16px;
   }
 
   .chat-panel {

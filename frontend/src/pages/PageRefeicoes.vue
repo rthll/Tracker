@@ -361,10 +361,10 @@ function iniciarEdicao(refeicaoId, index) {
     if (alimento) {
       editSearch.selecionar(alimento)
     } else {
-      editSearch.termo.value = item.nome
+      editSearch.buscar(item.nome, true)
     }
   } else {
-    editSearch.termo.value = item.nome
+    editSearch.buscar(item.nome, true)
   }
   nextTick(() => {
     if (editPanelRef.value) {
@@ -402,6 +402,7 @@ function salvarEdicao() {
     edicaoDestRef.value,
     itemAtualizado
   )
+  trackerStore.registrarHistoricoAlimento(alimento.id, false)
   uiStore.mostrarToast('Registro atualizado.', 'success')
   cancelarEdicao()
 }
@@ -434,8 +435,8 @@ function adicionarTipo() {
 }
 
 function salvarTemplate(refeicaoId) {
-  const ref = refeicoesDoDia.value[refeicaoId] || []
-  if (!ref.length) {
+  const itens = refeicoesDoDia.value[refeicaoId] || []
+  if (!itens.length) {
     uiStore.mostrarToast('Adicione alimentos à refeição antes de salvar como template.', 'error')
     return
   }
@@ -446,7 +447,7 @@ function salvarTemplate(refeicaoId) {
   const template = {
     id:    `tpl:${Date.now()}`,
     nome:  nome.trim(),
-    itens: ref.map(i => ({ ...i })),
+    itens: itens.map(i => ({ ...i })),
   }
   trackerStore.adicionarTemplate(template)
   uiStore.mostrarToast('Template salvo com sucesso.', 'success')
@@ -459,9 +460,6 @@ function repetirRefeicao() {
   d.setDate(d.getDate() - 1)
   const ontem = d.toISOString().split('T')[0]
   trackerStore.repetirRefeicao(ontem, data)
-  nextTick(() => {
-    document.getElementById('secaoRefeicaoCompleta')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  })
 }
 
 // ── Template operations ────────────────────────────────────────────────────────
