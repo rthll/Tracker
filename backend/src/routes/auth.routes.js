@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { requireFirebaseAdminCredentials } from "../middlewares/admin-credentials.middleware.js";
 import {
+  completeSignupRateLimiter,
+  signupCodeRateLimiter
+} from "../middlewares/rate-limit.middleware.js";
+import {
   postCompleteSignup,
   postSignupCode
 } from "../controllers/auth.controller.js";
@@ -8,5 +12,5 @@ import {
 export const authRouter = Router();
 
 authRouter.use(requireFirebaseAdminCredentials);
-authRouter.post("/auth/signup-code", postSignupCode);
-authRouter.post("/auth/complete-signup", postCompleteSignup);
+authRouter.post("/auth/signup-code", signupCodeRateLimiter, postSignupCode);
+authRouter.post("/auth/complete-signup", completeSignupRateLimiter, postCompleteSignup);

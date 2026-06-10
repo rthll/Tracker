@@ -11,8 +11,8 @@
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="panel-kicker">Cadastro</span>
-          <h2>Cadastrar alimento</h2>
+          <span class="panel-kicker">{{ editandoId ? 'Edição' : 'Cadastro' }}</span>
+          <h2>{{ editandoId ? 'Editar alimento' : 'Cadastrar alimento' }}</h2>
         </div>
       </div>
       <div class="form-grid">
@@ -36,8 +36,13 @@
           <label class="form-label">Calorias</label>
           <input type="number" v-model.number="form.calorias" class="form-control" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
         </div>
-        <div class="field-group span-12">
-          <button class="btn btn-primary w-100" @click="cadastrar" type="button">Cadastrar alimento</button>
+        <div class="field-group span-12 food-form-actions">
+          <button class="btn btn-primary w-100" @click="salvarAlimento" type="button">
+            {{ editandoId ? 'Salvar alterações' : 'Cadastrar alimento' }}
+          </button>
+          <button v-if="editandoId" class="btn btn-outline-secondary w-100" @click="cancelarEdicao" type="button">
+            Cancelar edição
+          </button>
         </div>
       </div>
     </article>
@@ -53,15 +58,31 @@
       <div class="chip-list food-library">
         <span v-if="!alimentosPersonalizados.length" class="chip-empty">Nenhum alimento personalizado cadastrado.</span>
         <template v-else>
-          <button
+          <div
             v-for="alimento in alimentosPersonalizados"
             :key="alimento.id"
-            type="button"
-            class="food-chip"
-            @click="selecionarAlimento(alimento.id)">
-            <span class="food-chip-name">{{ alimento.nome }}</span>
-            <span class="food-chip-macros">Personalizado | {{ fmt(alimento.calorias) }} kcal/100g</span>
-          </button>
+            class="food-chip food-chip-custom"
+            :class="{ 'is-editing': alimento.id === editandoId }">
+            <button
+              type="button"
+              class="food-chip-main"
+              @click="selecionarAlimento(alimento.id)">
+              <span class="food-chip-name">{{ alimento.nome }}</span>
+              <span class="food-chip-macros">Personalizado | {{ fmt(alimento.calorias) }} kcal/100g</span>
+            </button>
+            <div class="food-chip-actions">
+              <button
+                type="button"
+                class="editar-registro"
+                :aria-label="`Editar ${alimento.nome}`"
+                @click="iniciarEdicao(alimento)">Editar</button>
+              <button
+                type="button"
+                class="remover"
+                :aria-label="`Remover ${alimento.nome}`"
+                @click="removerAlimento(alimento)">x</button>
+            </div>
+          </div>
         </template>
       </div>
     </article>
@@ -83,19 +104,53 @@ const alimentosPersonalizados = computed(() =>
 )
 const alimentosTaco = computed(() => foodStore.alimentosTaco)
 
-const form = ref({ nome: '', carboidratos: 0, proteinas: 0, gorduras: 0, calorias: 0 })
+const form       = ref({ nome: '', carboidratos: 0, proteinas: 0, gorduras: 0, calorias: 0 })
+const editandoId = ref(null)
 
 function fmt(v) { return String(Math.round(Number(v) || 0)) }
 
-function cadastrar() {
+function limparForm() {
+  form.value = { nome: '', carboidratos: 0, proteinas: 0, gorduras: 0, calorias: 0 }
+  editandoId.value = null
+}
+
+function salvarAlimento() {
   const { nome, carboidratos, proteinas, gorduras, calorias } = form.value
   if (!nome.trim()) {
     uiStore.mostrarToast('Informe o nome do alimento.', 'error')
     return
   }
-  trackerStore.adicionarAlimento({ nome: nome.trim(), carboidratos, proteinas, gorduras, calorias })
-  form.value = { nome: '', carboidratos: 0, proteinas: 0, gorduras: 0, calorias: 0 }
-  uiStore.mostrarToast('Alimento cadastrado com sucesso.', 'success')
+  const dados = { nome: nome.trim(), carboidratos, proteinas, gorduras, calorias }
+  if (editandoId.value) {
+    trackerStore.atualizarAlimento(editandoId.value, dados)
+    uiStore.mostrarToast('Alimento atualizado com sucesso.', 'success')
+  } else {
+    trackerStore.adicionarAlimento(dados)
+    uiStore.mostrarToast('Alimento cadastrado com sucesso.', 'success')
+  }
+  limparForm()
+}
+
+function iniciarEdicao(alimento) {
+  editandoId.value = alimento.id
+  form.value = {
+    nome:         alimento.nome,
+    carboidratos: alimento.carboidratos,
+    proteinas:    alimento.proteinas,
+    gorduras:     alimento.gorduras,
+    calorias:     alimento.calorias,
+  }
+}
+
+function cancelarEdicao() {
+  limparForm()
+}
+
+function removerAlimento(alimento) {
+  if (!confirm(`Remover o alimento "${alimento.nome}"?`)) return
+  trackerStore.removerAlimento(alimento.id)
+  if (editandoId.value === alimento.id) limparForm()
+  uiStore.mostrarToast('Alimento removido.', 'success')
 }
 
 function selecionarAlimento(id) {

@@ -95,9 +95,30 @@
 
     <div>
       <p v-if="!tiposRefeicao.length" class="refeicao-empty">Nenhuma refeição cadastrada. Clique em "+ Nova refeição" para começar.</p>
-      <details v-for="tipo in tiposComTotais" :key="tipo.id" class="refeicao-card" :data-id="tipo.id" open>
+      <TransitionGroup
+        name="card-reorder"
+        tag="div"
+        ref="listaCardsRef"
+        class="refeicao-card-list"
+        :class="{ 'is-reordering': dragRefeicao.ativo }">
+      <details v-for="tipo in tiposComTotais" :key="tipo.id" class="refeicao-card" :data-id="tipo.id" open
+        :class="{ 'is-dragging': dragRefeicao.id === tipo.id }"
+        :style="dragRefeicao.id === tipo.id ? { transform: `translateY(${dragRefeicao.dy}px)` } : null">
         <summary class="refeicao-card-header">
           <div class="refeicao-card-title">
+            <button
+              type="button"
+              class="refeicao-drag-handle"
+              :aria-label="`Reordenar refeição ${tipo.nome}. Use as setas para mover.`"
+              @pointerdown="iniciarDragRefeicao($event, tipo.id)"
+              @pointermove="moverDragRefeicao"
+              @pointerup="soltarDragRefeicao"
+              @pointercancel="soltarDragRefeicao"
+              @keydown.up.prevent="moverTipoPorTeclado(tipo.id, -1)"
+              @keydown.down.prevent="moverTipoPorTeclado(tipo.id, 1)"
+              @click.stop.prevent>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="19" r="1.7"/><circle cx="15" cy="19" r="1.7"/></svg>
+            </button>
             <span class="refeicao-card-name">{{ tipo.nome }}</span>
             <span class="refeicao-card-count">{{ tipo.itens.length }} {{ tipo.itens.length === 1 ? 'item' : 'itens' }}</span>
           </div>
@@ -140,6 +161,7 @@
           </template>
         </div>
       </details>
+      </TransitionGroup>
       <button type="button" class="btn-add-refeicao" @click="adicionarTipo">+ Nova refeição</button>
     </div>
 
@@ -427,6 +449,82 @@ function removerItem(refeicaoId, index) {
 function removerTipo(id) {
   if (!confirm('Excluir esta refeição e todos os seus itens do dia?')) return
   trackerStore.removerTipoRefeicao(id)
+}
+
+// ── Reordenação de refeições (arrastar e soltar) ───────────────────────────────
+// Drag via pointer events no handle: o card arrastado segue o ponteiro com
+// translateY; os demais reordenam ao vivo quando o centro do card cruza o
+// ponto médio de um vizinho. Coordenadas via pageY/offsetTop (documento),
+// imunes aos transforms transitórios do TransitionGroup.
+
+const listaCardsRef = ref(null)
+const dragRefeicao  = reactive({ ativo: false, id: null, dy: 0, startY: 0, ultimoY: 0, ordemInicial: '' })
+let reordenandoCards = false
+
+function cardEl(id) {
+  const lista = listaCardsRef.value?.$el
+  return lista ? lista.querySelector(`.refeicao-card[data-id="${CSS.escape(id)}"]`) : null
+}
+
+function ordemAtualIds() {
+  return tiposRefeicao.value.map(t => t.id)
+}
+
+function iniciarDragRefeicao(e, tipoId) {
+  if (e.pointerType === 'mouse' && e.button !== 0) return
+  e.preventDefault()
+  e.currentTarget.setPointerCapture(e.pointerId)
+  dragRefeicao.ativo        = true
+  dragRefeicao.id           = tipoId
+  dragRefeicao.startY       = e.pageY
+  dragRefeicao.ultimoY      = e.pageY
+  dragRefeicao.dy           = 0
+  dragRefeicao.ordemInicial = ordemAtualIds().join('|')
+}
+
+async function moverDragRefeicao(e) {
+  if (!dragRefeicao.ativo) return
+  dragRefeicao.ultimoY = e.pageY
+  dragRefeicao.dy      = e.pageY - dragRefeicao.startY
+  if (reordenandoCards) return
+
+  const el = cardEl(dragRefeicao.id)
+  if (!el) return
+  const tipos  = trackerStore.tiposRefeicao
+  const idx    = tipos.findIndex(t => t.id === dragRefeicao.id)
+  const centro = el.offsetTop + dragRefeicao.dy + el.offsetHeight / 2
+  const outros = tipos.filter(t => t.id !== dragRefeicao.id).map(t => cardEl(t.id)).filter(Boolean)
+  const novoIdx = outros.filter(o => centro > o.offsetTop + o.offsetHeight / 2).length
+  if (novoIdx === idx || idx < 0) return
+
+  reordenandoCards = true
+  const offsetAntes = el.offsetTop
+  const [movido] = tipos.splice(idx, 1)
+  tipos.splice(novoIdx, 0, movido)
+  await nextTick()
+  // Compensa o deslocamento natural do card no novo slot para o arrasto seguir contínuo
+  dragRefeicao.startY += el.offsetTop - offsetAntes
+  dragRefeicao.dy      = dragRefeicao.ultimoY - dragRefeicao.startY
+  reordenandoCards = false
+}
+
+function soltarDragRefeicao() {
+  if (!dragRefeicao.ativo) return
+  const mudou = ordemAtualIds().join('|') !== dragRefeicao.ordemInicial
+  dragRefeicao.ativo = false
+  dragRefeicao.id    = null
+  dragRefeicao.dy    = 0
+  if (mudou) trackerStore.reordenarTiposRefeicao(ordemAtualIds())
+}
+
+function moverTipoPorTeclado(tipoId, delta) {
+  const ids = ordemAtualIds()
+  const idx = ids.indexOf(tipoId)
+  const novoIdx = idx + delta
+  if (idx < 0 || novoIdx < 0 || novoIdx >= ids.length) return
+  ids.splice(idx, 1)
+  ids.splice(novoIdx, 0, tipoId)
+  trackerStore.reordenarTiposRefeicao(ids)
 }
 
 function adicionarTipo() {

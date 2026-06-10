@@ -20,10 +20,14 @@
 
         <div id="contaConfirmacaoExclusao" :hidden="!confirmandoExclusao">
           <p class="conta-danger-confirm">Você tem certeza absoluta? Esta ação é irreversível.</p>
+          <div class="field-group">
+            <label for="contaSenhaConfirmacao" class="form-label">Confirme sua senha para continuar</label>
+            <input type="password" id="contaSenhaConfirmacao" v-model="senhaConfirmacao" class="form-control" autocomplete="current-password" placeholder="Sua senha" @keydown.enter="confirmarExclusao">
+          </div>
           <p class="conta-status" :class="contaStatusClass">{{ contaStatus }}</p>
           <div class="conta-confirm-actions">
             <button class="btn btn-danger" id="btnConfirmarExcluirConta" type="button" :disabled="excluindo" @click="confirmarExclusao">Sim, excluir minha conta</button>
-            <button class="btn btn-link" id="btnCancelarExclusao" type="button" @click="confirmandoExclusao = false">Cancelar</button>
+            <button class="btn btn-link" id="btnCancelarExclusao" type="button" @click="cancelarConfirmacao">Cancelar</button>
           </div>
         </div>
 
@@ -46,27 +50,50 @@ const confirmandoExclusao = ref(false)
 const contaStatus         = ref('')
 const contaStatusTipo     = ref('')
 const excluindo           = ref(false)
+const senhaConfirmacao    = ref('')
 
 const userEmail   = computed(() => authStore.user?.email || '—')
 const contaStatusClass = computed(() => contaStatusTipo.value ? `is-${contaStatusTipo.value}` : '')
 
 function fechar() {
   uiStore.contaModalAberta = false
+  cancelarConfirmacao()
+}
+
+function cancelarConfirmacao() {
   confirmandoExclusao.value = false
+  senhaConfirmacao.value = ''
   contaStatus.value = ''
+  contaStatusTipo.value = ''
 }
 
 async function confirmarExclusao() {
+  if (!senhaConfirmacao.value) {
+    contaStatus.value = 'Informe sua senha para confirmar a exclusão.'
+    contaStatusTipo.value = 'error'
+    return
+  }
   excluindo.value = true
-  contaStatus.value = 'Excluindo conta...'
   contaStatusTipo.value = ''
   try {
+    // Reautentica para renovar o auth_time do token — o backend exige login recente
+    contaStatus.value = 'Confirmando identidade...'
+    await window.TrackerAuth.login(userEmail.value, senhaConfirmacao.value)
+  } catch {
+    contaStatus.value = 'Senha incorreta.'
+    contaStatusTipo.value = 'error'
+    excluindo.value = false
+    return
+  }
+  try {
+    contaStatus.value = 'Excluindo conta...'
     await api.deleteAccount()
     await window.TrackerAuth.logout()
     fechar()
   } catch (err) {
     contaStatus.value = err?.message || 'Erro ao excluir conta.'
     contaStatusTipo.value = 'error'
+  } finally {
     excluindo.value = false
   }
 }

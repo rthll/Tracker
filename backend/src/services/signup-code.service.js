@@ -1,7 +1,7 @@
 import { createHash, randomInt } from "node:crypto";
 import { auth, db, fieldValue } from "../config/firebase-admin.js";
 import { env } from "../config/env.js";
-import { sendSignupCodeEmail } from "./email.service.js";
+import { sendAccountExistsEmail, sendSignupCodeEmail } from "./email.service.js";
 
 const MAX_ATTEMPTS = 5;
 
@@ -37,18 +37,16 @@ function createHttpError(message, statusCode) {
   return error;
 }
 
-async function assertEmailAvailable(email) {
+async function isEmailRegistered(email) {
   try {
     await auth.getUserByEmail(email);
-    throw createHttpError("Este e-mail ja esta cadastrado.", 409);
+    return true;
   } catch (error) {
-    if (error.statusCode === 409) {
-      throw error;
+    if (error.code === "auth/user-not-found") {
+      return false;
     }
 
-    if (error.code !== "auth/user-not-found") {
-      throw error;
-    }
+    throw error;
   }
 }
 
@@ -61,7 +59,16 @@ export async function requestSignupCode(emailInput) {
     throw createHttpError("Informe um e-mail valido.", 400);
   }
 
-  await assertEmailAvailable(email);
+  // Resposta identica para e-mails ja cadastrados (evita enumeracao de contas):
+  // o dono do e-mail recebe um aviso em vez do codigo.
+  if (await isEmailRegistered(email)) {
+    await sendAccountExistsEmail(email);
+    return {
+      email,
+      expiresInMinutes: env.authCodeTtlMinutes,
+      delivered: true
+    };
+  }
 
   const codeRef = getSignupCodeRef(email);
   const existingSnapshot = await codeRef.get();
@@ -111,8 +118,6 @@ export async function completeSignup({ email: emailInput, password, code }) {
     throw createHttpError("Informe o codigo de 6 digitos.", 400);
   }
 
-  await assertEmailAvailable(email);
-
   const codeRef = getSignupCodeRef(email);
   const snapshot = await codeRef.get();
 
@@ -143,6 +148,13 @@ export async function completeSignup({ email: emailInput, password, code }) {
       updatedAt: fieldValue.serverTimestamp()
     }, { merge: true });
     throw createHttpError("Codigo invalido.", 400);
+  }
+
+  // So depois do codigo validado (posse do e-mail comprovada) revelamos
+  // que a conta ja existe — evita enumeracao por quem nao tem o codigo.
+  if (await isEmailRegistered(email)) {
+    await codeRef.delete();
+    throw createHttpError("Este e-mail ja esta cadastrado.", 409);
   }
 
   const user = await auth.createUser({

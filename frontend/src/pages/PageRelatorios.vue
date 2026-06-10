@@ -2,9 +2,15 @@
   <div class="page-heading">
     <div>
       <span class="panel-kicker">Relatórios</span>
-      <h2>Exportação em PDF</h2>
+      <h2>Exportação</h2>
     </div>
-    <button class="btn btn-primary btn-compact" @click="exportarPdf" type="button">Exportar PDF</button>
+    <div class="report-export-actions">
+      <button class="btn btn-primary btn-compact" @click="exportarPdf" type="button" :disabled="!relatorio">Exportar PDF</button>
+      <button class="btn btn-outline-secondary btn-compact" @click="exportarCsv" type="button" :disabled="!relatorio">Exportar CSV</button>
+      <button class="btn btn-accent btn-compact" @click="exportarExcel" type="button" :disabled="!relatorio || exportandoExcel">
+        {{ exportandoExcel ? 'Gerando…' : 'Exportar Excel' }}
+      </button>
+    </div>
   </div>
 
   <section class="report-layout">
@@ -246,9 +252,13 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useTrackerStore } from '../stores/tracker.js'
+import { useUIStore } from '../stores/ui.js'
+import { exportarRelatorioCsv, exportarRelatorioXlsx } from '../composables/useRelatorioExport.js'
 import AppSelect from '../components/AppSelect.vue'
 
 const trackerStore = useTrackerStore()
+const uiStore      = useUIStore()
+const exportandoExcel = ref(false)
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const periodo           = ref('7')
@@ -295,5 +305,30 @@ function gerarRelatorio() {
 
 function exportarPdf() {
   window.print()
+}
+
+function exportarCsv() {
+  if (!relatorio.value) return
+  try {
+    exportarRelatorioCsv(relatorio.value)
+    uiStore.mostrarToast('CSV exportado.', 'success')
+  } catch (e) {
+    console.warn('Falha ao exportar CSV', e)
+    uiStore.mostrarToast('Não foi possível exportar o CSV.', 'error')
+  }
+}
+
+async function exportarExcel() {
+  if (!relatorio.value || exportandoExcel.value) return
+  exportandoExcel.value = true
+  try {
+    await exportarRelatorioXlsx(relatorio.value)
+    uiStore.mostrarToast('Excel exportado.', 'success')
+  } catch (e) {
+    console.warn('Falha ao exportar Excel', e)
+    uiStore.mostrarToast('Não foi possível exportar o Excel.', 'error')
+  } finally {
+    exportandoExcel.value = false
+  }
 }
 </script>

@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { env } from "../config/env.js";
 
 const EMAIL_SUBJECT = "Codigo de cadastro - Tracker de Macronutrientes";
+const ACCOUNT_EXISTS_SUBJECT = "Tentativa de cadastro - Tracker de Macronutrientes";
 
 function buildEmailText(code) {
   return [
@@ -10,6 +11,16 @@ function buildEmailText(code) {
     `Ele expira em ${env.authCodeTtlMinutes} minutos.`,
     ``,
     `Se voce nao solicitou este codigo, ignore este e-mail.`
+  ].join("\n");
+}
+
+function buildAccountExistsText() {
+  return [
+    `Recebemos uma tentativa de cadastro com este e-mail, mas ele ja possui uma conta no Tracker de Macronutrientes.`,
+    ``,
+    `Se foi voce, basta entrar normalmente. Caso tenha esquecido a senha, use a opcao "Esqueci minha senha" na tela de login.`,
+    ``,
+    `Se nao foi voce, ignore este e-mail. Nenhuma acao e necessaria.`
   ].join("\n");
 }
 
@@ -57,7 +68,7 @@ function buildEmailHtml(code) {
 </html>`;
 }
 
-async function sendViaResend(email, code) {
+async function sendViaResend(email, { subject, text, html }) {
   const from = env.mailFrom || "Tracker <onboarding@resend.dev>";
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -69,9 +80,9 @@ async function sendViaResend(email, code) {
     body: JSON.stringify({
       from,
       to: [email],
-      subject: EMAIL_SUBJECT,
-      text: buildEmailText(code),
-      html: buildEmailHtml(code)
+      subject,
+      text,
+      ...(html ? { html } : {})
     })
   });
 
@@ -102,30 +113,29 @@ function getSmtpTransporter() {
   return smtpTransporter;
 }
 
-async function sendViaSmtp(email, code) {
+async function sendViaSmtp(email, { subject, text, html }) {
   await getSmtpTransporter().sendMail({
     from: env.mailFrom,
     to: email,
-    subject: EMAIL_SUBJECT,
-    text: buildEmailText(code),
-    html: buildEmailHtml(code)
+    subject,
+    text,
+    ...(html ? { html } : {})
   });
 
   return { delivered: true };
 }
 
-export async function sendSignupCodeEmail(email, code) {
+async function sendEmail(email, message, onNotConfigured) {
   if (env.hasResendCredentials) {
-    return sendViaResend(email, code);
+    return sendViaResend(email, message);
   }
 
   if (env.hasSmtpCredentials) {
-    return sendViaSmtp(email, code);
+    return sendViaSmtp(email, message);
   }
 
   if (env.isDevelopment) {
-    console.info(`[DEV] Codigo de cadastro para ${email}: ${code}`);
-    return { delivered: false, devCode: code };
+    return onNotConfigured();
   }
 
   const error = new Error(
@@ -133,4 +143,25 @@ export async function sendSignupCodeEmail(email, code) {
   );
   error.statusCode = 503;
   throw error;
+}
+
+export async function sendSignupCodeEmail(email, code) {
+  return sendEmail(email, {
+    subject: EMAIL_SUBJECT,
+    text: buildEmailText(code),
+    html: buildEmailHtml(code)
+  }, () => {
+    console.info(`[DEV] Codigo de cadastro para ${email}: ${code}`);
+    return { delivered: false, devCode: code };
+  });
+}
+
+export async function sendAccountExistsEmail(email) {
+  return sendEmail(email, {
+    subject: ACCOUNT_EXISTS_SUBJECT,
+    text: buildAccountExistsText()
+  }, () => {
+    console.info(`[DEV] Tentativa de cadastro com e-mail ja registrado: ${email}`);
+    return { delivered: false };
+  });
 }

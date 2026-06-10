@@ -104,10 +104,21 @@ function onKeydown(e) {
 
 function fmt(v) { return String(Math.round(Number(v) || 0)) }
 
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 function highlightText(text, termo) {
-  if (!termo) return text
-  const idx = text.toLowerCase().indexOf(termo.toLowerCase())
-  if (idx === -1) return text
-  return text.slice(0, idx) + '<mark>' + text.slice(idx, idx + termo.length) + '</mark>' + text.slice(idx + termo.length)
+  const nome = String(text ?? '')
+  if (!termo) return escapeHtml(nome)
+  const idx = nome.toLowerCase().indexOf(termo.toLowerCase())
+  if (idx === -1) return escapeHtml(nome)
+  return escapeHtml(nome.slice(0, idx))
+    + '<mark>' + escapeHtml(nome.slice(idx, idx + termo.length)) + '</mark>'
+    + escapeHtml(nome.slice(idx + termo.length))
 }
 </script>

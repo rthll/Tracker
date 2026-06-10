@@ -19,6 +19,9 @@ function isAllowedDevOrigin(origin) {
 export function createApp() {
   const app = express();
 
+  // Atras do proxy do Vercel: necessario para o rate limit ler o IP real do cliente
+  app.set("trust proxy", 1);
+
   app.use(cors({
     origin(origin, callback) {
       if (!origin || env.frontendOrigins.includes(origin) || isAllowedDevOrigin(origin)) {

@@ -13,7 +13,8 @@ export async function requireFirebaseUser(request, response, next) {
     const decodedToken = await auth.verifyIdToken(token);
     request.user = {
       uid: decodedToken.uid,
-      email: decodedToken.email || ""
+      email: decodedToken.email || "",
+      authTime: decodedToken.auth_time || 0
     };
     next();
   } catch (error) {

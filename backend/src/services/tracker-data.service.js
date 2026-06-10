@@ -119,23 +119,34 @@ function stripUndefined(value) {
   }, {});
 }
 
+// Firestore limita cada batch a 500 operacoes — acima disso o commit falha
+const MAX_BATCH_OPERATIONS = 500;
+
+async function commitBatchedOperations(operations) {
+  for (let index = 0; index < operations.length; index += MAX_BATCH_OPERATIONS) {
+    const batch = db.batch();
+    operations.slice(index, index + MAX_BATCH_OPERATIONS).forEach((apply) => apply(batch));
+    await batch.commit();
+  }
+}
+
 async function syncCollection(collectionRef, nextItems, getId, mapData) {
   const snapshot = await collectionRef.get();
   const nextIds = new Set(nextItems.map(getId));
-  const batch = db.batch();
+  const operations = [];
 
   snapshot.docs.forEach((documentSnapshot) => {
     if (!nextIds.has(documentSnapshot.id)) {
-      batch.delete(documentSnapshot.ref);
+      operations.push((batch) => batch.delete(documentSnapshot.ref));
     }
   });
 
   nextItems.forEach((item) => {
     const id = getId(item);
-    batch.set(collectionRef.doc(id), stripUndefined(mapData(item)), { merge: true });
+    operations.push((batch) => batch.set(collectionRef.doc(id), stripUndefined(mapData(item)), { merge: true }));
   });
 
-  await batch.commit();
+  await commitBatchedOperations(operations);
 }
 
 async function loadLegacyState(userId) {
@@ -248,10 +259,11 @@ export async function saveStructuredState(userId, data) {
   await Promise.all(daysSnapshot.docs.map(async (dayDocument) => {
     if (!nextDates.has(dayDocument.id)) {
       const entriesSnapshot = await getEntriesRef(userId, dayDocument.id).get();
-      const batch = db.batch();
-      entriesSnapshot.docs.forEach((entryDocument) => batch.delete(entryDocument.ref));
-      batch.delete(dayDocument.ref);
-      await batch.commit();
+      const operations = entriesSnapshot.docs.map((entryDocument) => (
+        (batch) => batch.delete(entryDocument.ref)
+      ));
+      operations.push((batch) => batch.delete(dayDocument.ref));
+      await commitBatchedOperations(operations);
     }
   }));
 
@@ -306,6 +318,14 @@ export async function setCustomFood(userId, alimento) {
   }), { merge: true });
 }
 
+export async function removeCustomFood(userId, alimentoId) {
+  if (!alimentoId) {
+    return;
+  }
+
+  await getCustomFoodsRef(userId).doc(getSafeDocId(alimentoId)).delete();
+}
+
 export async function setDay(userId, date, dayMeals) {
   if (!date || !dayMeals) {
     return;
@@ -334,6 +354,8 @@ export async function applyIncrementalChange(userId, change, fullData) {
       return setBmrProfile(userId, change.tmbPerfil);
     case "customFood":
       return setCustomFood(userId, change.alimento);
+    case "removeCustomFood":
+      return removeCustomFood(userId, change.alimentoId);
     case "userMeta":
       return setUserMeta(userId, change);
     case "day":

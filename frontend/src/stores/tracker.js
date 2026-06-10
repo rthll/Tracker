@@ -32,27 +32,45 @@ const tiposPadrao    = () => [
 ]
 const tmbDefault = () => ({
   sexo: '', peso: 0, altura: 0, idade: 0, objetivo: 'manter',
+  equacao: 'mifflin', gorduraCorporal: 0,
   resultado: 0, macros: { proteinas: 0, gorduras: 0, carboidratos: 0 },
 })
 
-const OBJETIVOS_MACROS = {
-  manter: { proteinas: 0.20, gorduras: 0.30, carboidratos: 0.50 },
-  perder: { proteinas: 0.30, gorduras: 0.25, carboidratos: 0.45 },
-  ganhar: { proteinas: 0.25, gorduras: 0.20, carboidratos: 0.55 },
+// Gramas por kg de peso corporal. Faixas: proteínas 1,6–2,2 g/kg e gorduras
+// 0,6–1,0 g/kg; o objetivo do usuário define o ponto usado dentro de cada faixa.
+export const OBJETIVOS_MACROS = {
+  manter: { proteinas: 1.6, gorduras: 0.8 },
+  perder: { proteinas: 2.2, gorduras: 0.6 },
+  ganhar: { proteinas: 2.0, gorduras: 1.0 },
 }
 
-function calcularTmb(p) {
-  if (!p.sexo || p.peso <= 0 || p.altura <= 0 || p.idade <= 0) return 0
-  return (10 * p.peso) + (6.25 * p.altura) - (5 * p.idade) + (p.sexo === 'masculino' ? 5 : -161)
-}
+// Fatores de Atwater: kcal por grama de cada macronutriente
+const KCAL_POR_GRAMA = { proteinas: 4, carboidratos: 4, gorduras: 9 }
 
-function calcularMacrosTmb(calorias, objetivo = 'manter') {
-  const cfg = OBJETIVOS_MACROS[objetivo] || OBJETIVOS_MACROS.manter
-  return {
-    proteinas:    Math.round((calorias * cfg.proteinas)    / 4),
-    gorduras:     Math.round((calorias * cfg.gorduras)     / 9),
-    carboidratos: Math.round((calorias * cfg.carboidratos) / 4),
+// Cálculo único da calculadora: TMB (pela equação escolhida) e, a partir dela,
+// a distribuição de macros em gramas. Proteínas e gorduras saem de g/kg de
+// peso corporal conforme o objetivo; carboidratos completam as calorias
+// restantes, garantindo que 4·P + 9·G + 4·C feche com a TMB calculada.
+function calcularPerfilTmb(p) {
+  const vazio = { resultado: 0, macros: { proteinas: 0, gorduras: 0, carboidratos: 0 } }
+  let tmb = 0
+  if (p.equacao === 'katch') {
+    if (p.peso <= 0 || p.gorduraCorporal <= 0 || p.gorduraCorporal >= 100) return vazio
+    const massaMagra = p.peso * (1 - p.gorduraCorporal / 100)
+    tmb = 370 + (21.6 * massaMagra)
+  } else {
+    if (!p.sexo || p.peso <= 0 || p.altura <= 0 || p.idade <= 0) return vazio
+    tmb = (10 * p.peso) + (6.25 * p.altura) - (5 * p.idade) + (p.sexo === 'masculino' ? 5 : -161)
   }
+  const resultado = Math.round(tmb)
+  if (resultado <= 0) return vazio
+
+  const cfg       = OBJETIVOS_MACROS[p.objetivo] || OBJETIVOS_MACROS.manter
+  const proteinas = Math.round(p.peso * cfg.proteinas)
+  const gorduras  = Math.round(p.peso * cfg.gorduras)
+  const restante  = resultado - (proteinas * KCAL_POR_GRAMA.proteinas) - (gorduras * KCAL_POR_GRAMA.gorduras)
+  const carboidratos = Math.max(0, Math.round(restante / KCAL_POR_GRAMA.carboidratos))
+  return { resultado, macros: { proteinas, gorduras, carboidratos } }
 }
 
 function normalizarMetas(m) {
@@ -67,16 +85,17 @@ function normalizarMetas(m) {
 function normalizarTmbPerfil(p) {
   const sexo     = ['masculino', 'feminino'].includes(p?.sexo) ? p.sexo : ''
   const objetivo = ['manter', 'perder', 'ganhar'].includes(p?.objetivo) ? p.objetivo : 'manter'
+  const equacao  = ['mifflin', 'katch'].includes(p?.equacao) ? p.equacao : 'mifflin'
   const perfil   = {
-    sexo, objetivo,
-    peso:   valNum(p?.peso),
-    altura: valNum(p?.altura),
-    idade:  valNum(p?.idade),
-    resultado: 0,
-    macros: { proteinas: 0, gorduras: 0, carboidratos: 0 },
+    sexo, objetivo, equacao,
+    peso:            valNum(p?.peso),
+    altura:          valNum(p?.altura),
+    idade:           valNum(p?.idade),
+    gorduraCorporal: valNum(p?.gorduraCorporal),
   }
-  perfil.resultado = calcularTmb(perfil)
-  if (perfil.resultado > 0) perfil.macros = calcularMacrosTmb(perfil.resultado, perfil.objetivo)
+  const { resultado, macros } = calcularPerfilTmb(perfil)
+  perfil.resultado = resultado
+  perfil.macros    = macros
   return perfil
 }
 
@@ -369,6 +388,33 @@ export const useTrackerStore = defineStore('tracker', () => {
     return normalizado
   }
 
+  function atualizarAlimento(alimentoId, dados) {
+    const food      = useFoodStore()
+    const existente = food.alimentosPersonalizados.find(a => a.id === alimentoId)
+    if (!existente) return null
+    const atualizado = normalizarAlimentoPersonalizado({ ...existente, ...dados, id: alimentoId })
+    food.alimentosPersonalizados = food.alimentosPersonalizados.map(a =>
+      a.id === alimentoId ? atualizado : a
+    )
+    salvar({ tipo: 'customFood', alimento: atualizado })
+    return atualizado
+  }
+
+  function removerAlimento(alimentoId) {
+    const food      = useFoodStore()
+    const existente = food.alimentosPersonalizados.find(a => a.id === alimentoId)
+    if (!existente) return false
+    food.alimentosPersonalizados = food.alimentosPersonalizados.filter(a => a.id !== alimentoId)
+    salvar({ tipo: 'removeCustomFood', alimentoId })
+    const tinhaReferencia = food.favoritos.includes(alimentoId) || food.historicoAlimentos.includes(alimentoId)
+    if (tinhaReferencia) {
+      food.favoritos          = food.favoritos.filter(id => id !== alimentoId)
+      food.historicoAlimentos = food.historicoAlimentos.filter(id => id !== alimentoId)
+      salvar({ tipo: 'userMeta', favoritos: food.favoritos, historicoAlimentos: food.historicoAlimentos })
+    }
+    return true
+  }
+
   function alternarFavorito(alimentoId) {
     const food = useFoodStore()
     if (!food.getAlimentoPorId(alimentoId)) return false
@@ -419,6 +465,21 @@ export const useTrackerStore = defineStore('tracker', () => {
   function removerTipoRefeicao(id) {
     tiposRefeicao.value = tiposRefeicao.value.filter(r => r.id !== id)
     salvar()
+  }
+
+  function reordenarTiposRefeicao(ordemIds) {
+    if (!Array.isArray(ordemIds) || !ordemIds.length) return
+    const porId = new Map(tiposRefeicao.value.map(t => [t.id, t]))
+    const novaOrdem = ordemIds.map(id => porId.get(id)).filter(Boolean)
+    if (novaOrdem.length !== porId.size) return
+    tiposRefeicao.value = novaOrdem
+    const food = useFoodStore()
+    salvar({
+      tipo: 'userMeta',
+      favoritos: food.favoritos,
+      historicoAlimentos: food.historicoAlimentos,
+      tiposRefeicao: novaOrdem.map(t => ({ ...t })),
+    })
   }
 
   // ── Templates ─────────────────────────────────────────────────────────────
@@ -572,11 +633,11 @@ export const useTrackerStore = defineStore('tracker', () => {
     // Init
     init, resetarDadosUsuario, salvar,
     // Food (via food store)
-    adicionarAlimento, alternarFavorito, registrarHistoricoAlimento, criarItemRefeicao,
+    adicionarAlimento, atualizarAlimento, removerAlimento, alternarFavorito, registrarHistoricoAlimento, criarItemRefeicao,
     // Meal CRUD
     adicionarRefeicao, removerItem, moverItem, atualizarItemRefeicao, repetirRefeicao,
     // Meal type
-    adicionarTipoRefeicao, removerTipoRefeicao,
+    adicionarTipoRefeicao, removerTipoRefeicao, reordenarTiposRefeicao,
     // Templates
     adicionarTemplate, removerTemplate, aplicarTemplateNoDia,
     // Goals & BMR

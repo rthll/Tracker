@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@floating-ui/vue": "^1.1.11",
+    "exceljs": "^4.4.0",
     "firebase": "^12.14.0",
     "motion": "^12.40.0",
     "pinia": "^3.0.4",
