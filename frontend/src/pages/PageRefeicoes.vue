@@ -293,6 +293,7 @@ import { useTrackerStore } from '../stores/tracker.js'
 import { useUIStore } from '../stores/ui.js'
 import { useFoodStore } from '../stores/food.js'
 import { useFoodSearch } from '../composables/useFoodSearch.js'
+import { somarDias } from '../composables/datas.js'
 import AppSelect from '../components/AppSelect.vue'
 import FoodSearchDropdown from '../components/FoodSearchDropdown.vue'
 
@@ -357,10 +358,7 @@ const totalDia = computed(() =>
 const quantidadeOntem = computed(() => {
   const data = trackerStore.dataAtual
   if (!data) return 0
-  const [ano, mes, dia] = data.split('-').map(Number)
-  const d = new Date(ano, mes - 1, dia)
-  d.setDate(d.getDate() - 1)
-  const ontem = d.toISOString().split('T')[0]
+  const ontem = somarDias(data, -1)
   const refOntem = trackerStore.refeicoesPorData[ontem] || {}
   return Object.values(refOntem).flat().length
 })
@@ -553,10 +551,7 @@ function salvarTemplate(refeicaoId) {
 
 function repetirRefeicao() {
   const data = trackerStore.dataAtual
-  const [ano, mes, dia] = data.split('-').map(Number)
-  const d = new Date(ano, mes - 1, dia)
-  d.setDate(d.getDate() - 1)
-  const ontem = d.toISOString().split('T')[0]
+  const ontem = somarDias(data, -1)
   trackerStore.repetirRefeicao(ontem, data)
 }
 

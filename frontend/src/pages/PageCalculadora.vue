@@ -158,12 +158,14 @@ function fmt(v) { return String(Math.round(Number(v) || 0)) }
 
 function calcular() {
   const p = form.value
-  if (!p.sexo || p.peso <= 0 || p.altura <= 0 || p.idade <= 0) {
+  // Katch-McArdle usa só massa magra: exige peso e % de gordura corporal
+  if (p.equacao === 'katch') {
+    if (p.peso <= 0 || p.gorduraCorporal <= 0 || p.gorduraCorporal >= 100) {
+      uiStore.mostrarToast('Informe peso e percentual de gordura corporal para usar Katch-McArdle.', 'error')
+      return
+    }
+  } else if (!p.sexo || p.peso <= 0 || p.altura <= 0 || p.idade <= 0) {
     uiStore.mostrarToast('Informe sexo, peso, altura e idade para calcular a TMB.', 'error')
-    return
-  }
-  if (p.equacao === 'katch' && (p.gorduraCorporal <= 0 || p.gorduraCorporal >= 100)) {
-    uiStore.mostrarToast('Informe o percentual de gordura corporal para usar Katch-McArdle.', 'error')
     return
   }
   trackerStore.atualizarTmbPerfil({ ...p })

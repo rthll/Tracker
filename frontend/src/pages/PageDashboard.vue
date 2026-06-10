@@ -192,7 +192,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useTrackerStore } from '../stores/tracker.js'
 import { useFoodStore } from '../stores/food.js'
 import { useUIStore } from '../stores/ui.js'
@@ -233,26 +233,17 @@ watch(() => uiStore.preselectedFoodId, async (id) => {
   }
 })
 
-// Close panel when clicking outside (handles Teleport'd dropdown too)
-function onDocClick(e) {
-  const wrapper = searchWrapperRef.value?.$el || searchWrapperRef.value
-  const floating = document.querySelector('.food-search-panel--floating')
-  if (wrapper && !wrapper.contains(e.target) && floating && !floating.contains(e.target)) {
-    foodSearch.fecharPainel()
-  }
-}
+// Fechar ao clicar fora fica a cargo do próprio FoodSearchDropdown
 
 const ringAnimReady  = ref(false)
 const animatedTotais = ref({ carboidratos: 0, proteinas: 0, gorduras: 0, calorias: 0 })
 
 onMounted(() => {
-  document.addEventListener('click', onDocClick)
   nextTick(() => {
     animatedTotais.value = { ...totais.value }
     ringAnimReady.value = true
   })
 })
-onUnmounted(() => document.removeEventListener('click', onDocClick))
 
 // ── Computeds ─────────────────────────────────────────────────────────────────
 const tiposRefeicao     = computed(() => trackerStore.tiposRefeicao)

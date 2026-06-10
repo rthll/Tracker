@@ -49,6 +49,7 @@ import { computed } from 'vue'
 import { useUIStore }     from '../stores/ui.js'
 import { useAuthStore }   from '../stores/auth.js'
 import { useTrackerStore } from '../stores/tracker.js'
+import { dataLocalISO, somarDias } from '../composables/datas.js'
 
 const uiStore      = useUIStore()
 const authStore    = useAuthStore()
@@ -63,7 +64,7 @@ const paginas = [
   { id: 'calculadora', label: 'Calculadora' },
 ]
 
-const hoje = computed(() => new Date().toISOString().split('T')[0])
+const hoje = computed(() => dataLocalISO())
 
 const nomeUsuario = computed(() => {
   const u = authStore.user
@@ -74,10 +75,8 @@ const nomeUsuario = computed(() => {
 const dataFormatada = computed(() => {
   const data = trackerStore.dataAtual
   if (!data) return 'Hoje'
-  const hj = new Date().toISOString().split('T')[0]
-  const d = new Date()
-  d.setDate(d.getDate() - 1)
-  const ontem = d.toISOString().split('T')[0]
+  const hj = dataLocalISO()
+  const ontem = somarDias(hj, -1)
   if (data === hj) return 'Hoje'
   if (data === ontem) return 'Ontem'
   const [ano, mes, dia] = data.split('-').map(Number)
@@ -92,10 +91,7 @@ function mudarData(delta) {
   const input = document.getElementById('dataSelecionada')
   if (!input) return
   const base = input.value || trackerStore.dataAtual
-  const [ano, mes, dia] = base.split('-').map(Number)
-  const d = new Date(ano, mes - 1, dia)
-  d.setDate(d.getDate() + delta)
-  const novaData = d.toISOString().split('T')[0]
+  const novaData = somarDias(base, delta)
   if (delta > 0 && novaData > hoje.value) return
   input.value = novaData
   input.dispatchEvent(new Event('change'))

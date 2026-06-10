@@ -7,6 +7,8 @@
 //
 // Cores por macro seguem o design system (ver CLAUDE.md).
 
+import { dataLocalISO } from './datas.js'
+
 const COR_PRIMARY = '1D6B57' // verde marca (cabeçalhos)
 const COR_HEADER_TXT = 'FFFFFF'
 const COR_ZEBRA = 'F3F4F6'
@@ -34,7 +36,7 @@ function periodoLabel(relatorio) {
 }
 
 function nomeArquivo(relatorio, ext) {
-  const hoje = new Date().toISOString().split('T')[0]
+  const hoje = dataLocalISO()
   return `relatorio-macros_${hoje}.${ext}`
 }
 

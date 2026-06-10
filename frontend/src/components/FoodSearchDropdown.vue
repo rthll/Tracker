@@ -1,5 +1,5 @@
 <template>
-  <div class="food-search-wrapper">
+  <div class="food-search-wrapper" ref="wrapperRef">
     <div class="food-search-row">
       <input
         ref="referenceRef"
@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useFloating, offset, flip, size, autoUpdate } from '@floating-ui/vue'
 import { animate } from 'motion'
 
@@ -58,6 +58,7 @@ const props = defineProps({
 
 const emit = defineEmits(['selecionar'])
 
+const wrapperRef   = ref(null)
 const referenceRef = ref(null)
 const floatingRef  = ref(null)
 
@@ -83,6 +84,19 @@ watch(() => props.foodSearch.painelAberto.value, async (aberto) => {
   if (!el) return
   animate(el, { opacity: [0, 1], y: [-6, 0] }, { duration: 0.18 })
 })
+
+// Fechar ao clicar fora — mousedown (não click) para rodar antes de handlers
+// de click externos que reabrem o painel (ex.: chips de categoria).
+// Verifica wrapper E painel flutuante, pois o painel está em body via Teleport.
+function onDocMousedown(e) {
+  if (!props.foodSearch.painelAberto.value) return
+  if (wrapperRef.value?.contains(e.target)) return
+  if (floatingRef.value?.contains(e.target)) return
+  props.foodSearch.fecharPainel()
+}
+
+onMounted(()  => document.addEventListener('mousedown', onDocMousedown))
+onUnmounted(() => document.removeEventListener('mousedown', onDocMousedown))
 
 function onKeydown(e) {
   const fs = props.foodSearch

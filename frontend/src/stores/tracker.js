@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { api } from '../composables/api.js'
+import { dataLocalISO } from '../composables/datas.js'
 import { useAuthStore } from './auth.js'
 import { useFoodStore } from './food.js'
 
@@ -169,7 +170,7 @@ export const useTrackerStore = defineStore('tracker', () => {
   const tmbPerfil         = ref(tmbDefault())
   const tiposRefeicao     = ref(tiposPadrao())
   const templatesRefeicao = ref([])
-  const dataAtual         = ref(new Date().toISOString().split('T')[0])
+  const dataAtual         = ref(dataLocalISO())
 
   // ── Persistence ────────────────────────────────────────────────────────────
 

@@ -254,6 +254,7 @@ import { ref, computed } from 'vue'
 import { useTrackerStore } from '../stores/tracker.js'
 import { useUIStore } from '../stores/ui.js'
 import { exportarRelatorioCsv, exportarRelatorioXlsx } from '../composables/useRelatorioExport.js'
+import { dataLocalISO, somarDias } from '../composables/datas.js'
 import AppSelect from '../components/AppSelect.vue'
 
 const trackerStore = useTrackerStore()
@@ -262,9 +263,9 @@ const exportandoExcel = ref(false)
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const periodo           = ref('7')
-const dataBase          = ref(new Date().toISOString().split('T')[0])
+const dataBase          = ref(dataLocalISO())
 const datasPontuais     = ref([])
-const datasPontuaisInput = ref(new Date().toISOString().split('T')[0])
+const datasPontuaisInput = ref(dataLocalISO())
 const relatorio         = ref(null)
 
 function fmt(v)  { return String(Math.round(Number(v) || 0)) }
@@ -278,12 +279,9 @@ const datasRelatorio = computed(() => {
   }
   const dias = Number(periodo.value) || 1
   const datas = []
-  const base = dataBase.value || new Date().toISOString().split('T')[0]
-  const [ano, mes, dia] = base.split('-').map(Number)
+  const base = dataBase.value || dataLocalISO()
   for (let i = dias - 1; i >= 0; i--) {
-    const d = new Date(ano, mes - 1, dia)
-    d.setDate(d.getDate() - i)
-    datas.push(d.toISOString().split('T')[0])
+    datas.push(somarDias(base, -i))
   }
   return datas
 })

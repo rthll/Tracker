@@ -38,14 +38,23 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { api } from '../composables/api.js'
+import { useAuthStore } from '../stores/auth.js'
+
+const authStore = useAuthStore()
 
 const email    = ref('')
 const password = ref('')
 const signupCode = ref('')
-const status   = ref('Verificando sessão...')
+const status   = ref(authStore.isReady ? '' : 'Verificando sessão...')
 const statusTipo = ref('')
+
+// Limpa o "Verificando sessão..." quando o Firebase resolve deslogado —
+// sem isso a mensagem ficava na tela de login para sempre
+watch(() => authStore.isReady, (ready) => {
+  if (ready && status.value === 'Verificando sessão...') setStatus('')
+})
 const loadingLogin    = ref(false)
 const loadingRegister = ref(false)
 const loadingReset    = ref(false)
